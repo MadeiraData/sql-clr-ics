@@ -137,7 +137,7 @@ public partial class StoredProcedures
 
         foreach (MailAddress addr in msg.To)
         {
-            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=\"{0}\";X-NUM-UESTS=0:mailto:{1}", addr.DisplayName, addr.Address));
+            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address));
         }
 
         if (use_reminder && cancel_event_identifier.IsNull)
