@@ -79,4 +79,9 @@
   <ItemGroup>
     <None Include="sql_clr_ics.publish.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="sql_clr_ics_install.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
