@@ -28,6 +28,7 @@
     <Recovery>SIMPLE</Recovery>
     <PageVerify>CHECKSUM</PageVerify>
     <Trustworthy>True</Trustworthy>
+    <GenerateCreateScript>True</GenerateCreateScript>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -74,5 +75,8 @@
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sql_clr_ics.publish.xml" />
   </ItemGroup>
 </Project>
