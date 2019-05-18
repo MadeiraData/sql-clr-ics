@@ -113,10 +113,16 @@ public partial class StoredProcedures
         str.AppendLine("PRODID:-//Schedule a Meeting");
         str.AppendLine("VERSION:2.0");
 
-        if (!cancel_event_identifier.IsNull)
-            str.AppendLine("METHOD:CANCEL");
-        else
+        if (cancel_event_identifier.IsNull)
+        {
             str.AppendLine("METHOD:REQUEST");
+            str.AppendLine("SEQUENCE:1");
+        }
+        else
+        {
+            str.AppendLine("METHOD:CANCEL");
+            str.AppendLine("SEQUENCE:2");
+        }
 
         str.AppendLine("BEGIN:VEVENT");
         str.AppendLine(string.Format("DTSTART:{0:yyyyMMddTHHmmssZ}", start_time_utc.Value));
@@ -129,7 +135,10 @@ public partial class StoredProcedures
         str.AppendLine(string.Format("SUMMARY:{0}", msg.Subject));
         str.AppendLine(string.Format("ORGANIZER:MAILTO:{0}", msg.From.Address));
 
-        str.AppendLine(string.Format("ATTENDEE;CN=\"{0}\";RSVP=TRUE:mailto:{1}", msg.To[0].DisplayName, msg.To[0].Address));
+        foreach (MailAddress addr in msg.To)
+        {
+            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=\"{0}\";X-NUM-UESTS=0:mailto:{1}", addr.DisplayName, addr.Address));
+        }
 
         if (use_reminder && cancel_event_identifier.IsNull)
         {
