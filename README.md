@@ -17,7 +17,7 @@ Tba
 
 ## License and copyright
 
-This project is licensed under the MPL 2.0 license agreement.
+This project is licensed under the MIT license agreement.
 More info in [the license file](https://github.com/EitanBlumin/sql_clr_ics/blob/master/LICENSE).
 
 ## Acknowledgements
