@@ -28,6 +28,7 @@ CREATE PROCEDURE [dbo].[clr_send_ics_invite]
 	@password [nvarchar](4000) = null,
 	@use_reminder [bit] = 1,
 	@reminder_minutes [int] = 15,
+	@require_rsvp [bit] = 0,
 	@cancel_event_identifier [uniqueidentifier] = null,
 	@event_identifier [uniqueidentifier] = null OUTPUT,
 	@suppress_info_messages [bit] = 0

@@ -12,7 +12,7 @@ public partial class StoredProcedures
         , SqlString subject, SqlString body, SqlString location
         , SqlDateTime start_time_utc, SqlDateTime end_time_utc, SqlDateTime timestamp_utc
         , SqlString smtp_server, SqlInt32 port, SqlBoolean use_ssl, SqlString username, SqlString password
-        , SqlBoolean use_reminder, SqlInt32 reminder_minutes
+        , SqlBoolean use_reminder, SqlInt32 reminder_minutes, SqlBoolean require_rsvp
         , SqlGuid cancel_event_identifier, out SqlGuid event_identifier
         , SqlBoolean suppress_info_messages
         )
@@ -116,12 +116,12 @@ public partial class StoredProcedures
         if (cancel_event_identifier.IsNull)
         {
             str.AppendLine("METHOD:REQUEST");
-            str.AppendLine("SEQUENCE:1");
+            str.AppendLine("SEQUENCE:0");
         }
         else
         {
             str.AppendLine("METHOD:CANCEL");
-            str.AppendLine("SEQUENCE:2");
+            str.AppendLine("SEQUENCE:1");
         }
 
         str.AppendLine("BEGIN:VEVENT");
@@ -135,10 +135,16 @@ public partial class StoredProcedures
         str.AppendLine(string.Format("SUMMARY:{0}", msg.Subject));
         str.AppendLine(string.Format("ORGANIZER:MAILTO:{0}", msg.From.Address));
 
+        string rsvp_string = (require_rsvp.Value ? "PARTSTAT=NEEDS-ACTION;RSVP=TRUE" : "PARTSTAT=ACCEPTED;RSVP=FALSE");
+        bool organizer_in_recipients = false;
+
         foreach (MailAddress addr in msg.To)
         {
-            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address));
+            if (addr.Address == msg.From.Address) organizer_in_recipients = true;
+            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;{2};CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string));
         }
+
+        if (!organizer_in_recipients) str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=NON-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", msg.From.DisplayName, msg.From.Address));
 
         if (use_reminder && cancel_event_identifier.IsNull)
         {
