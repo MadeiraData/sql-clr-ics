@@ -1,6 +1,6 @@
 # sql_clr_ics
 
-Send Calendar Invites from within SQL Server using a CLR stored procedure.
+Send Calendar Event / Appointment Invitations (iCal formatted file) from within SQL Server using a CLR stored procedure
 
 ## Prerequisites
 
