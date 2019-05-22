@@ -43,7 +43,7 @@ The CLR stored procedure `clr_send_ics_invite` accepts the following parameters:
 |---|---|---|---|
 | `@from` | nvarchar(4000) | _no default_ | Must be a valid single e-mail address from which the invite will be sent. |
 | `@to` | nvarchar(4000) | _no default_ | Accepts a list of e-mail addresses (at least one) to be invited as required partisipants, separated by either a comma or a semicolon. |
-| `@cc` | nvarchar(400) | _null_ | Optional parameter. Accepts a list of e-mail addresses (at least one) to be used as CC, separated by either a comma or a semicolon. |
+| `@cc` | nvarchar(4000) | _null_ | Optional parameter. Accepts a list of e-mail addresses (at least one) to be used as CC, separated by either a comma or a semicolon. |
 | `@reply_to` | nvarchar(4000) | _null_ | Optional parameter. Accepts an e-mail address to be used as the Reply To address (if different from the `@from` address. |
 | `@subject` | nvarchar(4000) | _no default_ | Mandatory parameter. A text string to be used as the meeting / e-mail's subject. |
 | `@body` | nvarchar(4000) | _null_ | Optional parameter. A text string to be used as the e-mail's HTML body. |
