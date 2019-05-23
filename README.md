@@ -11,33 +11,34 @@ The CLR assembly in this project can only be deployed to a database with the **t
 If you have SSDT, you can open the SQL server project and publish it to your database of choice.
 Alternatively, you can use [this simple installation script](https://github.com/EitanBlumin/sql_clr_ics/blob/master/sql_clr_ics/sql_clr_ics_install.sql) that sets everything up for you in your database of choice.
 
-## Usage
-
-The CLR stored procedure `clr_send_ics_invite` accepts the following parameters:
+## Syntax
 
 ```
-	@from [nvarchar](4000),
-	@to [nvarchar](4000),
-	@cc [nvarchar](4000) = null,
-	@reply_to [nvarchar](4000) = null,
-	@subject [nvarchar](4000),
-	@body [nvarchar](4000) = null,
-	@location [nvarchar](4000) = null,
-	@start_time_utc [datetime] = null,
-	@end_time_utc [datetime] = null,
-	@timestamp_utc [datetime] = null,
-	@smtp_server [nvarchar](4000) = null,
-	@port [int] = 25,
-	@use_ssl [bit] = 0,
-	@username [nvarchar](4000) = null,
-	@password [nvarchar](4000) = null,
-	@use_reminder [bit] = 1,
-	@reminder_minutes [int] = 15,
-	@require_rsvp [bit] = 0,
-	@cancel_event_identifier [uniqueidentifier] = null,
-	@event_identifier [uniqueidentifier] = null OUTPUT,
-	@suppress_info_messages [bit] = 0
+exec clr_send_ics_invite
+	  [ @from = ] 'sender'
+	, [ @to = ] 'recipients [ ; ...n ]'
+	[ , [ @cc = ] 'copy_recipients [ ; ...n ]' ]
+	[ , [ @reply_to = ] 'reply_to' ]
+	[ , [ @subject = ] 'subject' ]
+	[ , [ @body = ] 'body' ]
+	[ , [ @location = ] 'location' ]
+	[ , [ @start_time_utc = ] 'start_time_utc' ]
+	[ , [ @end_time_utc = ] 'end_time_utc' ]
+	[ , [ @timestamp_utc = ] 'timestamp_utc' ]
+	[ , [ @smtp_server = ] 'smtp_server' ]
+	[ , [ @port = ] port ]
+	[ , [ @use_ssl = ] use_ssl ]
+	[ , [ @username = ] 'username' ]
+	[ , [ @password = ] 'password' ]
+	[ , [ @use_reminder = ] use_reminder ]
+	[ , [ @reminder_minutes = ] reminder_minutes ]
+	[ , [ @require_rsvp = ] require_rsvp ]
+	[ , [ @cancel_event_identifier = ] 'cancel_event_identifier' ]
+	[ , [ @event_identifier = ] @event_identifier OUTPUT ]
+	[ , [ @suppress_info_messages = ] suppress_info_messages ]
 ```
+
+## Arguments
 
 |Parameter|Type|Default|Description|
 |---|---|---|---|
@@ -55,7 +56,7 @@ The CLR stored procedure `clr_send_ics_invite` accepts the following parameters:
 | `@port` | int | _25_ | Optional parameter. Sets the SMTP port to be used for sending the e-mail. If not specified, by default will be set as **25**. |
 | `@use_ssl` | bit | _0_ | Optional parameter. Sets whether to use SSL authentication for the SMTP server. If not specified, by default will be set as **0 (false)**. |
 | `@username` | nvarchar(4000) | _null (use current Network Credentials)_ | Optional parameter. Sets the username to use when authenticating against the SMTP server. If not specified, by default the **current Network Credentials** will be used (of the SQL Server service). |
-| `@password` | nvarchar(4000) | _empty password_ | Optional parameter. Sets the password to use when authenticating against the SMTP server. Only used when `@username` is also specified. By default, will use **empty password**. |
+| `@password` | nvarchar(4000) | _empty string | Optional parameter. Sets the password to use when authenticating against the SMTP server. Only used when `@username` is also specified. By default, will use an **empty string**. |
 | `@use_reminder` | bit | _1_ | Optional parameter. Sets whether to set a reminder for the meeting. By default is set to **1 (true)**. |
 | `@reminder_minutes` | int | _15_ | If `@use_reminder` is enabled, this parameter will be used for setting the reminder time in minutes. By default is set to **15**. |
 | `@require_rsvp` | bit | _0_ | If set to 0 (false), then participants will not be required to respond with RSVP, and their participation is automatically set as ACCEPTED. If set to 1 (true), then participants will be required to respond with RSVP, and their participation is automatically set as NEEDS-ACTION. By default set to **0 (false)**. |
