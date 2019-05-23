@@ -8,6 +8,7 @@ using Microsoft.SqlServer.Server;
 
 public partial class StoredProcedures
 {
+    #region Enums and Constants
     private enum iCalMethods
     {
         PUBLISH,
@@ -15,7 +16,9 @@ public partial class StoredProcedures
         REPLY,
         CANCEL,
         ADD,
-        REFRESH
+        REFRESH,
+        COUNTER,
+        DECLINECOUNTER
     }
 
     private enum iCalClass
@@ -26,7 +29,8 @@ public partial class StoredProcedures
     }
 
     private static string[] iCalRoles = { "REQ-PARTICIPANT", "OPT-PARTICIPANT", "NON-PARTICIPANT", "CHAIR" };
-    
+    #endregion Enums and Constants
+
     [SqlProcedure]
     public static void clr_send_ics_invite(
           SqlString profile_name
@@ -337,7 +341,11 @@ ORDER BY pa.sequence_number ASC";
             str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{2};CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, blind_copy_recipients_role.Value.ToUpper()));
         }
 
-        if (!organizer_in_recipients) str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=NON-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", msg.From.DisplayName, msg.From.Address));
+        if (!organizer_in_recipients)
+        {
+            msg.Bcc.Add(msg.From);
+            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=NON-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", msg.From.DisplayName, msg.From.Address));
+        }
 
         if (use_reminder && method.Value != "CANCEL")
         {
