@@ -250,6 +250,89 @@ Even though I tried to utilize Microsoft's Database Mail Profile mechanics, I co
 
 I also didn't implement any functionality involving multiple accounts per profile to be used as "failover" accounts. So only the first account per profile is used.
 
+## Examples
+
+### A. Send a calendar invitation with RSVP requirement
+
+```
+DECLARE @EventID nvarchar(4000)
+ 
+EXEC clr_send_ics_invite
+        @from_address = N'the_organizer@gmail.com',
+        @recipients = N'someone@gmail.com,otherguy@outlook.com',
+        @subject = N'let us meet for pizza!',
+        @body = N'<h1>Pizza!</h1><p>Bring your own beer!</p>',
+	@body_format = N'HTML',
+        @location = N'The Pizza place at Hank and Errison corner',
+        @start_time_utc = '2019-07-02 19:00',
+        @end_time_utc = '2019-07-02 23:00',
+        @timestamp_utc = '2019-03-30 18:00',
+        @smtp_server = 'smtp.gmail.com',
+        @port = 465,
+        @enable_ssl = 1,
+        @username = N'the_organizer@gmail.com',
+        @password = N'NotActuallyMyPassword',
+        @use_reminder = 1,
+        @reminder_minutes = 30,
+        @require_rsvp = 1,
+        @event_identifier = @EventID OUTPUT
+ 
+SELECT EventID = @EventID
+```
+
+### B. Cancel the previously sent invitation
+
+```
+EXEC clr_send_ics_invite
+        @from_address = N'the_organizer@gmail.com',
+        @recipients = N'someone@gmail.com,otherguy@outlook.com',
+        @subject = N'let us meet for pizza!',
+        @body = N'<h1>Pizza!</h1><p>Bring your own beer!</p>',
+	@body_format = N'HTML',
+        @location = N'The Pizza place at Hank and Errison corner',
+        @start_time_utc = '2019-07-02 19:00',
+        @end_time_utc = '2019-07-02 23:00',
+        @timestamp_utc = '2019-03-30 18:00',
+        @smtp_server = 'smtp.gmail.com',
+        @port = 465,
+        @enable_ssl = 1,
+        @username = N'the_organizer@gmail.com',
+        @password = N'NotActuallyMyPassword',
+        @require_rsvp = 1,
+        @cancel_event_identifier = @EventID,
+        @event_identifier = @EventID OUTPUT
+ 
+SELECT EventID = @EventID
+```
+
+### C. Send an automated calendar invitation without RSVP requirement (i.e. participants are auto-accepted)
+
+```
+DECLARE @EventID nvarchar(4000)
+ 
+EXEC clr_send_ics_invite
+        @from_address = N'sla_bot@company.com',
+        @recipients = N'employee1@company.com,employee2@company.com',
+        @subject = N'Weekly SLA Shift',
+        @body = N'<h1>You are on-call this week!</h1><p>This is an automated message</p>',
+	@body_format = N'HTML',
+        @location = N'Our offices',
+        @start_time_utc = '2019-07-01 00:00',
+        @end_time_utc = '2019-07-04 23:59',
+        @timestamp_utc = '2019-05-01 00:00',
+        @smtp_server = 'smtp.company.com',
+        @port = 587,
+        @enable_ssl = 1,
+        @username = N'sla_bot@company.com',
+        @password = N'SomethingPassword',
+        @use_reminder = 1,
+        @reminder_minutes = 300,
+        @require_rsvp = 0,
+        @event_identifier = @EventID OUTPUT
+ 
+SELECT EventID = @EventID
+```
+ 
 ## License and copyright
 
 This project is copyrighted by Eitan Blumin, and licensed under the MIT license agreement.
@@ -265,3 +348,8 @@ This project was based mostly on the following stack overflow discussion:
 Also used the iCal specification for further improvements:
 
 [https://www.kanzaki.com/docs/ical/](https://www.kanzaki.com/docs/ical/)
+
+## See Also  
+ [sp_send_dbmail](https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-send-dbmail-transact-sql)   
+ [clr_http_request](https://github.com/EitanBlumin/ClrHttpRequest)
+ [clr_wmi_request](https://github.com/EitanBlumin/ClrWmiRequest)
