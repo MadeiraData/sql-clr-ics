@@ -219,7 +219,7 @@ ORDER BY pa.sequence_number ASC";
         msg.Subject = subject.Value;
         msg.Body = body.Value;
         msg.Priority = mailPriority;
-        msg.IsBodyHtml = true;
+        msg.IsBodyHtml = (body_format.Value == "HTML");
 
         if (!file_attachments.IsNull)
         {
