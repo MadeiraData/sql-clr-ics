@@ -15,54 +15,228 @@ Alternatively, you can use [this simple installation script](https://github.com/
 
 ```
 exec clr_send_ics_invite
-	  [ @from = ] 'sender'
-	, [ @to = ] 'recipients [ ; ...n ]'
-	[ , [ @cc = ] 'copy_recipients [ ; ...n ]' ]
+	[   [ @profile_name = ] 'profile_name' ]
+	[ , [ @recipients = ] 'recipients [ ; ...n ]' ]
+	[ , [ @copy_recipients = ] 'copy_recipients [ ; ...n ]' ]
+	[ , [ @blind_copy_recipients = ] 'blind_copy_recipients [ ; ...n ]' ]
+	[ , [ @from_address = ] 'from_address' ]
 	[ , [ @reply_to = ] 'reply_to' ]
 	[ , [ @subject = ] 'subject' ]
 	[ , [ @body = ] 'body' ]
+	[ , [ @body_format = ] 'body_format' ]
+	[ , [ @importance = ] 'importance' ]
+	[ , [ @sensitivity = ] 'sensitivity' ]
+	[ , [ @file_attachments = ] 'file_attachments [ ; ...n ]' ]
 	[ , [ @location = ] 'location' ]
 	[ , [ @start_time_utc = ] 'start_time_utc' ]
 	[ , [ @end_time_utc = ] 'end_time_utc' ]
 	[ , [ @timestamp_utc = ] 'timestamp_utc' ]
-	[ , [ @smtp_server = ] 'smtp_server' ]
-	[ , [ @port = ] port ]
-	[ , [ @use_ssl = ] use_ssl ]
-	[ , [ @username = ] 'username' ]
-	[ , [ @password = ] 'password' ]
+	[ , [ @method = ] 'method' ]
+	[ , [ @sequence = ] sequence ]
+	[ , [ @prod_id = ] 'prod_id' ]
 	[ , [ @use_reminder = ] use_reminder ]
 	[ , [ @reminder_minutes = ] reminder_minutes ]
 	[ , [ @require_rsvp = ] require_rsvp ]
-	[ , [ @cancel_event_identifier = ] 'cancel_event_identifier' ]
-	[ , [ @event_identifier = ] @event_identifier OUTPUT ]
+	[ , [ @recipients_role = ] 'recipients_role' ]
+	[ , [ @copy_recipients_role = ] 'copy_recipients_role' ]
+	[ , [ @blind_copy_recipients_role = ] 'blind_copy_recipients_role' ]
+	[ , [ @smtp_servername = ] 'smtp_servername' ]
+	[ , [ @port = ] port ]
+	[ , [ @enable_ssl = ] enable_ssl ]
+        [ , [ @use_default_credentials = ] use_default_credentials ]
+	[ , [ @username = ] username ]
+	[ , [ @password = ] password ]
 	[ , [ @suppress_info_messages = ] suppress_info_messages ]
+	[ , [ @event_identifier = ] event_identifier [ OUTPUT ] ]
 ```
 
 ## Arguments
 
-|Parameter|Type|Default|Description|
-|---|---|---|---|
-| `@from` | nvarchar(4000) | _no default_ | Must be a valid single e-mail address from which the invite will be sent. |
-| `@to` | nvarchar(4000) | _no default_ | Accepts a list of e-mail addresses (at least one) to be invited as required partisipants, separated by either a comma or a semicolon. |
-| `@cc` | nvarchar(4000) | _null_ | Optional parameter. Accepts a list of e-mail addresses (at least one) to be used as CC, separated by either a comma or a semicolon. |
-| `@reply_to` | nvarchar(4000) | _null_ | Optional parameter. Accepts an e-mail address to be used as the Reply To address (if different from the `@from` address. |
-| `@subject` | nvarchar(4000) | _no default_ | Mandatory parameter. A text string to be used as the meeting / e-mail's subject. |
-| `@body` | nvarchar(4000) | _null_ | Optional parameter. A text string to be used as the e-mail's HTML body. |
-| `@location` | nvarchar(4000) | _null_ | Optional parameter. Sets the location for the meeting. |
-| `@start_time_utc` | datetime | _UTC now + 5 hours_ | Optional parameter. Sets the start time (in UTC) of the meeting. If not specified, by default will be set as **UTC now + 5 hours**. |
-| `@end_time_utc` | datetime | _@start_time_utc + 1 hour_ | Optional parameter. Sets the end time (in UTC) of the meeting. If not specified, by default will be set as **`@start_time_utc` + 1 hour**. |
-| `@timestamp_utc` | datetime | _UTC now_ | Optional parameter. Sets the DTSTAMP section of the iCal (usually used for consistent updating of meeting invites). If not specified, by default will be set as **UTC now**. |
-| `@smtp_server` | nvarchar(4000) | _localhost_ | Optional parameter. Sets the SMTP host name to be used for sending the e-mail. If not specified, by default will be set as **"localhost"**. |
-| `@port` | int | _25_ | Optional parameter. Sets the SMTP port to be used for sending the e-mail. If not specified, by default will be set as **25**. |
-| `@use_ssl` | bit | _0_ | Optional parameter. Sets whether to use SSL authentication for the SMTP server. If not specified, by default will be set as **0 (false)**. |
-| `@username` | nvarchar(4000) | _null (use current Network Credentials)_ | Optional parameter. Sets the username to use when authenticating against the SMTP server. If not specified, by default the **current Network Credentials** will be used (of the SQL Server service). |
-| `@password` | nvarchar(4000) | _empty string | Optional parameter. Sets the password to use when authenticating against the SMTP server. Only used when `@username` is also specified. By default, will use an **empty string**. |
-| `@use_reminder` | bit | _1_ | Optional parameter. Sets whether to set a reminder for the meeting. By default is set to **1 (true)**. |
-| `@reminder_minutes` | int | _15_ | If `@use_reminder` is enabled, this parameter will be used for setting the reminder time in minutes. By default is set to **15**. |
-| `@require_rsvp` | bit | _0_ | If set to 0 (false), then participants will not be required to respond with RSVP, and their participation is automatically set as ACCEPTED. If set to 1 (true), then participants will be required to respond with RSVP, and their participation is automatically set as NEEDS-ACTION. By default set to **0 (false)**. |
-| `@cancel_event_identifier` | uniqueidentifier | _null_ | You may specify a value for this parameter, if you want to cancel an event that you've already sent. Use the corresponding event's identifier. |
-| `@event_identifier` | uniqueidentifier | _null_ | Output parameter. Returns the event's GUID, which can later be used for cancellation. If `@cancel_event_identifier` was specified, the same GUID will be returned. |
-| `@suppress_info_messages` | bit | _0_ | If set to 0, an informational message will be printed upon successful delivery of the invitation ( ex. "Mail Sent. Event Identifier: 1234-1234-1234-1234" ). If set to 1, this message will not be printed. By default is set to **0 (false)**. |
+## Arguments  
+`[ @profile_name = ] 'profile_name'`
+ Is the name of the profile to send the message from. The *profile_name* is of type **sysname**, with a default of NULL. The *profile_name* must be the name of an existing Database Mail profile. When no *profile_name* is specified, **clr_send_ics_invite** checks whether **@from_address** was specified. If not, it uses the default public profile for the **msdb** database. If **@from_address** wasn't specified, and there is no default public profile for the database, **@profile_name** must be specified.  
+  
+`[ @recipients = ] 'recipients'`
+ Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type **nvarchar(4000)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
+  
+`[ @copy_recipients = ] 'copy_recipients'`
+ Is a semicolon-delimited list of e-mail addresses to carbon copy the message to. The copy recipients list is of type **nvarchar(4000)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
+  
+`[ @blind_copy_recipients = ] 'blind_copy_recipients'`
+ Is a semicolon-delimited list of e-mail addresses to blind carbon copy the message to. The blind copy recipients list is of type **nvarchar(4000)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
+  
+`[ @from_address = ] 'from_address'`
+ Is the value of the 'from address' of the email message, and the organizer of the calendar meeting. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, the default is NULL.
+  
+`[ @reply_to = ] 'reply_to'`
+ Is the value of the 'reply to address' of the email message. It accepts only one email address as a valid value. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, the default is NULL.  
+  
+`[ @subject = ] 'subject'`
+ Is the subject of the e-mail message. The subject is of type **nvarchar(255)**. If no subject is specified, the default is 'SQL Server Meeting'.  
+  
+`[ @body = ] 'body'`
+ Is the body of the e-mail message. The message body is of type **nvarchar(4000)**, with a default of NULL.  
+  
+`[ @body_format = ] 'body_format'`
+ Is the format of the message body. The parameter is of type **varchar(20)**, with a default of NULL. When specified, the headers of the outgoing message are set to indicate that the message body has the specified format. The parameter may contain one of the following values:  
+  
+-   TEXT  
+  
+-   HTML  
+  
+ Defaults to TEXT.  
+  
+`[ @importance = ] 'importance'`
+ Is the importance of the message. The parameter is of type **varchar(6)**. The parameter may contain one of the following values:  
+  
+-   Low  
+  
+-   Normal  
+  
+-   High  
+  
+ Defaults to Normal.  
+  
+`[ @sensitivity = ] 'sensitivity'`
+ Is the sensitivity classification of the message. The parameter is of type **nvarchar(12)**. The parameter may contain one of the following values:  
+  
+-   Public
+
+-   Private  
+  
+-   Confidential  
+  
+ Defaults to Public.  
+  
+`[ @file_attachments = ] 'file_attachments'`
+ Is a semicolon-delimited list of file names to attach to the e-mail message. Files in the list must be specified as absolute paths. The attachments list is of type **nvarchar(4000)**. By default, Database Mail limits file attachments to 1 MB per file.  
+
+`[ @location = ] 'location'`
+ Is the location of the calendar meeting. The parameter is of type **nvarchar(4000)**, with a default of NULL.
+	
+`[ @start_time_utc = ] 'start_time_utc'`
+ Is the start time of the calendar meeting, in UTC. The parameter is of type **datetime**. If the parameter is not specified, it defaults to **@timestamp_utc** + 5 hours.
+ 
+`[ @end_time_utc = ] 'end_time_utc'`
+ Is the end time of the calendar meeting, in UTC. The parameter is of type **datetime**. If the parameter is not specified, it defaults to **@start_time_utc** + 1 hour.
+ 
+`[ @timestamp_utc = ] 'timestamp_utc'`
+ Is the DTSTAMP property of the calendar meeting, in UTC. The parameter is of type **datetime**. If the parameter is not specified, it defaults to current UTC time.
+
+`[ @method = ] 'method'`
+ Is the method of the calendar event message. The parameter is of type **nvarchar(14)**. The parameter may contain one of the following values:  
+  
+-   PUBLISH
+
+-   REQUEST
+
+-   REPLY
+
+-   CANCEL
+
+-   ADD
+
+-   REFRESH
+
+-   COUNTER
+
+-   DECLINECOUNTER
+
+ Defaults to REQUEST.  
+
+`[ @sequence = ] sequence`
+ Is the sequence of the calendar event message. The parameter is of type **int**, with a default of 0. Unless **@method** is specified as 'CANCEL', in which case the default would be 1. This parameter is important for when updating existing calendar events.
+ 
+`[ @prod_id = ] 'prod_id'`
+ Is the PRODID property of the calendar meeting. The parameter is of type **nvarchar(4000)**, with a default of 'Schedule a Meeting'.
+ 
+`[ @use_reminder = ] use_reminder`
+ Determines whether to add a reminder to the event. The parameter is of type **bit**, with a default of 1 (true).
+ 
+`[ @reminder_minutes = ] reminder_minutes`
+ Is the number of minutes to set for the event reminder. The parameter is of type **int**, with a default of 15.
+ 
+`[ @require_rsvp = ] require_rsvp`
+ Determines whether participants are required to respond with an RSVP. The parameter is of type **bit**, with a default of 0 (false). If this parameter equals to 0 (false), then all participants are assumed to have accepted their invitation, without requesting a response.
+ 
+`[ @recipients_role = ] 'recipients_role'`
+ Is the meeting role for the participants specified in the **@recipients** parameter. The parameter is of type **nvarchar(15)**. The parameter may contain one of the following values:
+ 
+- REQ-PARTICIPANT
+
+- OPT-PARTICIPANT
+
+- NON-PARTICIPANT
+
+- CHAIR
+
+Defaults to REQ-PARTICIPANT.
+ 
+`[ @copy_recipients_role = ] 'copy_recipients_role'`
+ Is the meeting role for the participants specified in the **@copy_recipients** parameter. The parameter is of type **nvarchar(15)**. The parameter may contain one of the following values:
+ 
+- REQ-PARTICIPANT
+
+- OPT-PARTICIPANT
+
+- NON-PARTICIPANT
+
+- CHAIR
+
+Defaults to OPT-PARTICIPANT.
+
+`[ @blind_copy_recipients_role = ] 'blind_copy_recipients_role'`
+ Is the meeting role for the participants specified in the **@blind_copy_recipients** parameter. The parameter is of type **nvarchar(15)**. The parameter may contain one of the following values:
+ 
+- REQ-PARTICIPANT
+
+- OPT-PARTICIPANT
+
+- NON-PARTICIPANT
+
+- CHAIR
+
+Defaults to NON-PARTICIPANT.
+
+`[ @smtp_servername = ] 'smtp_servername'`
+ Is the SMTP server name to be used for sending the e-mail message. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, and no mail profile was used, the default is 'localhost'.
+ 
+`[ @port = ] port`
+ Is the SMTP server port to be used for sending the e-mail message. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **int**. If no parameter is specified, and no mail profile was used, the default is 25.
+
+`[ @enable_ssl = ] enable_ssl`
+ Determines whether the SMTP server should use SSL authentication. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **bit**. If no parameter is specified, and no mail profile was used, the default is 0 (false).
+
+`[ @use_default_credentials = ] use_default_credentials`
+ Determines whether the SMTP server should use its default network credentials. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **bit**. If no parameter is specified, and no mail profile was used, the default is 0 (false). If **@username** is specified, this parameter is ignored.
+ 
+`[ @username = ] username`
+ Is the userame to be used when authenticating with the SMTP server. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, and no mail profile was used, the default is to use the server's default network credentials instead.
+ 
+`[ @password = ] password`
+ Is the password to be used when authenticating with the SMTP server. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, the default is to use an empty string for the password.
+
+| **NOTE:**  Unfortunately, since MSDB doesn't allow access to the mail profile passwords, it's impossible to utilize an existing mail profile for getting the password for an SMTP server. Therefore, unless you want to use an empty password or default network credentials, *you must specify a value for this parameter*. |
+| --- |
+
+`[ @suppress_info_messages = ] suppress_info_messages`
+ Determines whether to *NOT* display the success message after sending the e-mail. The parameter is of type **bit**, with a default of 0 (false).
+	
+`[ @event_identifier = ] event_identifier [ OUTPUT ]`
+ Optional output parameter returns the *event_identifier* of the calendar meeting. You may also override this value by specifying a parameter with a non-null value for it, in order to uniquely identify a calendar event. If no *event_identifier* was specified, a Global Unique Identifier (Guid) will automatically be generated instead. This parameter must be specified when **@method** is 'CANCEL'. The *event_identifier* is of type **nvarchar(4000)**.
+  
+## Result Sets  
+ On success, returns the message "Mail Sent. Event Identifier: %s" (where %s is replaced with the sent **@event_identifier**), unless **@suppress_info_messages** is specified as 1 (true).
+ 
+ On Failure, returns an error message specifying the problem.
+
+## Remarks
+
+I did my best to align the parameters of this procedure with Microsoft's **sp_send_dbmail** procedure. Unfortunately, since this is a CLR procedure, there are limitations to what can be done. Specifically, it's impossible to define default values for parameters of type **nvarchar(max)** and **varchar(max)**, and so I had to replace those with **nvarchar(4000)**.
+
+Even though I tried to utilize Microsoft's Database Mail Profile mechanics, I couldn't get access to the account passwords (which is probably a good thing), and so the **@password** parameter becomes mandatory (unless you want to use an empty password or the server's default network credentials).
+
+I also didn't implement any functionality involving multiple accounts per profile to be used as "failover" accounts. So only the first account per profile is used.
 
 ## License and copyright
 
