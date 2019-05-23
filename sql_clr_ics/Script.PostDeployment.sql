@@ -3,7 +3,6 @@ Post-Deployment Script
 ---------------------------------------------------
 This script re-creates the CLR stored procedure with default values for parameters
 (which is not possible natively)
-*/
 IF OBJECT_ID('clr_send_ics_invite') IS NOT NULL DROP PROCEDURE [dbo].[clr_send_ics_invite]
 GO
 SET ANSI_NULLS OFF
@@ -36,3 +35,4 @@ WITH EXECUTE AS CALLER
 AS
 EXTERNAL NAME [sql_clr_ics].[StoredProcedures].[clr_send_ics_invite]
 GO
+*/
