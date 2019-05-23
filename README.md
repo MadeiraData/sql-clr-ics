@@ -351,5 +351,5 @@ Also used the iCal specification for further improvements:
 
 ## See Also  
  [sp_send_dbmail](https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-send-dbmail-transact-sql)   
- [clr_http_request](https://github.com/EitanBlumin/ClrHttpRequest)
+ [clr_http_request](https://github.com/EitanBlumin/ClrHttpRequest)   
  [clr_wmi_request](https://github.com/EitanBlumin/ClrWmiRequest)
