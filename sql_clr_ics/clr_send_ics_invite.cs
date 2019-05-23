@@ -43,14 +43,13 @@ public partial class StoredProcedures
         , SqlBoolean use_reminder, SqlInt32 reminder_minutes, SqlBoolean require_rsvp
         , SqlString recipients_role, SqlString copy_recipients_role, SqlString blind_copy_recipients_role
         , SqlString smtp_servername, SqlInt32 port, SqlBoolean enable_ssl
-        , SqlString username, SqlString password
+        , SqlBoolean use_default_credentials, SqlString username, SqlString password
         , SqlBoolean suppress_info_messages
         , ref SqlString event_identifier
         )
     {
 #region local variable declaration
 
-        bool use_default_credentials = false;
         ICredentialsByHost credentials = CredentialCache.DefaultNetworkCredentials;
         MailPriority mailPriority;
 
@@ -58,7 +57,7 @@ public partial class StoredProcedures
 
 #region get missing info from sysmail profile
 
-        if (from_address.IsNull || !profile_name.IsNull)
+        if (from_address.IsNull || (username.IsNull && use_default_credentials.IsNull) || !profile_name.IsNull)
         {
             SqlConnection con = new SqlConnection("context connection=true"); // using existing CLR context connection
             SqlCommand cmd = con.CreateCommand();
@@ -117,8 +116,8 @@ ORDER BY pa.sequence_number ASC";
                     if (smtp_servername.IsNull) smtp_servername = rdr.GetSqlString(2);
                     if (port.IsNull) port = rdr.GetSqlInt32(3);
                     if (enable_ssl.IsNull) enable_ssl = rdr.GetSqlBoolean(4);
-                    use_default_credentials = rdr.GetSqlBoolean(5).Value;
-                    if (username.IsNull && !use_default_credentials) username = rdr.GetSqlString(6);
+                    if (use_default_credentials.IsNull) use_default_credentials = rdr.GetSqlBoolean(5).Value;
+                    if (username.IsNull && !use_default_credentials.Value) username = rdr.GetSqlString(6);
                 }
                 rdr.Close();
             }
@@ -129,7 +128,7 @@ ORDER BY pa.sequence_number ASC";
 
 #region default values initialization
 
-        if (subject.IsNull || string.IsNullOrEmpty(subject.Value)) subject = "Meeting";
+        if (subject.IsNull || string.IsNullOrEmpty(subject.Value)) subject = "SQL Server Meeting";
         if (body_format.IsNull || string.IsNullOrEmpty(body_format.Value)) body_format = "TEXT";
         if (timestamp_utc.IsNull) timestamp_utc = DateTime.UtcNow;
         if (start_time_utc.IsNull) start_time_utc = timestamp_utc.Value.AddMinutes(+300);
@@ -369,7 +368,7 @@ ORDER BY pa.sequence_number ASC";
         {
             smtpclient.Host = smtp_servername.Value;
             smtpclient.Port = port.Value;
-            smtpclient.UseDefaultCredentials = use_default_credentials;
+            smtpclient.UseDefaultCredentials = use_default_credentials.Value;
             smtpclient.EnableSsl = enable_ssl.Value;
             smtpclient.Credentials = credentials;
             System.Net.Mime.ContentType contype = new System.Net.Mime.ContentType("text/calendar");

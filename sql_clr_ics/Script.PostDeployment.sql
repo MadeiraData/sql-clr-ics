@@ -11,15 +11,15 @@ GO
 SET QUOTED_IDENTIFIER OFF
 GO
 CREATE PROCEDURE [dbo].[clr_send_ics_invite]
-	@profile_name [nvarchar](4000) = NULL,
+	@profile_name [sysname] = NULL,
 	@recipients [nvarchar](4000) = NULL,
 	@copy_recipients [nvarchar](4000) = NULL,
 	@blind_copy_recipients [nvarchar](4000) = NULL,
 	@from_address [nvarchar](4000) = NULL,
 	@reply_to [nvarchar](4000) = NULL,
-	@subject [nvarchar](4000) = N'Meeting',
+	@subject [nvarchar](255) = N'SQL Server Meeting',
 	@body [nvarchar](4000) = NULL,
-	@body_format [nvarchar](4) = N'TEXT',
+	@body_format [nvarchar](20) = N'TEXT',
 	@importance [nvarchar](6) = N'Normal',
 	@sensitivity [nvarchar](12) = N'Public',
 	@file_attachments [nvarchar](4000) = NULL,
@@ -39,6 +39,7 @@ CREATE PROCEDURE [dbo].[clr_send_ics_invite]
 	@smtp_servername [nvarchar](4000) = N'localhost',
 	@port [int] = 25,
 	@enable_ssl [bit] = 0,
+	@use_default_credentials [bit] = 0,
 	@username [nvarchar](4000) = NULL,
 	@password [nvarchar](4000) = NULL,
 	@suppress_info_messages [bit] = 0,
