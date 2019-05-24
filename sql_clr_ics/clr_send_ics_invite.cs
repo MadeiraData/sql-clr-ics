@@ -48,14 +48,14 @@ public partial class StoredProcedures
         , ref SqlString event_identifier
         )
     {
-#region local variable declaration
+        #region local variable declaration
 
         ICredentialsByHost credentials = CredentialCache.DefaultNetworkCredentials;
         MailPriority mailPriority;
 
-#endregion local variable declaration
+        #endregion local variable declaration
 
-#region get missing info from sysmail profile
+        #region get missing info from sysmail profile
 
         if (from_address.IsNull || (username.IsNull && use_default_credentials.IsNull) || !profile_name.IsNull)
         {
@@ -78,7 +78,8 @@ WHERE pp.is_default = 1";
                         rdr.Close();
                         con.Close();
                         throw new Exception("profile_name not specified and no default profile found");
-                    } else
+                    }
+                    else
                     {
                         profile_name = rdr.GetSqlString(0);
                     }
@@ -126,7 +127,7 @@ ORDER BY pa.sequence_number ASC";
 
         #endregion get missing info from sysmail profile
 
-#region default values initialization
+        #region default values initialization
 
         if (subject.IsNull || string.IsNullOrEmpty(subject.Value)) subject = "SQL Server Meeting";
         if (body_format.IsNull || string.IsNullOrEmpty(body_format.Value)) body_format = "TEXT";
@@ -165,14 +166,14 @@ ORDER BY pa.sequence_number ASC";
         #endregion default values initialization
 
         #region validations
-        
+
         StringBuilder sb_Errors = new StringBuilder();
 
         if (from_address.IsNull || string.IsNullOrEmpty(from_address.Value)) sb_Errors.AppendLine("Missing sender: Please specify @from_address");
         if (
                 (recipients.IsNull || string.IsNullOrEmpty(recipients.Value))
-            &&  (copy_recipients.IsNull || string.IsNullOrEmpty(copy_recipients.Value))
-            &&  (blind_copy_recipients.IsNull || string.IsNullOrEmpty(blind_copy_recipients.Value))
+            && (copy_recipients.IsNull || string.IsNullOrEmpty(copy_recipients.Value))
+            && (blind_copy_recipients.IsNull || string.IsNullOrEmpty(blind_copy_recipients.Value))
            )
             sb_Errors.AppendLine("Missing recipients: Please specify either @recipients, @copy_recipients or @blind_copy_recipients");
 
@@ -213,7 +214,214 @@ ORDER BY pa.sequence_number ASC";
 
         #endregion validations
 
-#region initialize MailMessage and recipients
+        #region initialize recipients using faux mail message
+
+        MailMessage msg = new MailMessage();
+
+        try
+        {
+            msg.From = new MailAddress(from_address.Value);
+        }
+        catch (Exception e)
+        {
+            throw new Exception("@from_address is invalid: " + e.Message);
+        }
+
+        try
+        {
+            if (!reply_to.IsNull && !string.IsNullOrEmpty(reply_to.Value)) msg.ReplyToList.Add(reply_to.Value.Replace(';', ','));
+        }
+        catch (Exception e)
+        {
+            throw new Exception("@reply_to is invalid: " + e.Message);
+        }
+
+        try
+        {
+            msg.To.Add(recipients.Value.Replace(';', ','));
+        }
+        catch (Exception e)
+        {
+            throw new Exception("@recipients is invalid: " + e.Message);
+        }
+
+        try
+        {
+            if (!copy_recipients.IsNull && !string.IsNullOrEmpty(copy_recipients.Value)) msg.CC.Add(copy_recipients.Value.Replace(';', ','));
+        }
+        catch (Exception e)
+        {
+            throw new Exception("@copy_recipients is invalid: " + e.Message);
+        }
+
+        try
+        {
+            if (!blind_copy_recipients.IsNull && !string.IsNullOrEmpty(blind_copy_recipients.Value)) msg.Bcc.Add(blind_copy_recipients.Value.Replace(';', ','));
+        }
+        catch (Exception e)
+        {
+            throw new Exception("@blind_copy_recipients is invalid: " + e.Message);
+        }
+
+        #endregion initialize recipients using faux mail message
+
+        #region construct ICS file contents
+
+        StringBuilder ics_contents = new StringBuilder();
+        ics_contents.AppendLine("BEGIN:VCALENDAR");
+        ics_contents.AppendLine(string.Format("PRODID:-//{0}", prod_id.Value));
+        ics_contents.AppendLine("VERSION:2.0");
+        ics_contents.AppendLine(string.Format("METHOD:{0}", method.Value.ToUpper()));
+        ics_contents.AppendLine(string.Format("SEQUENCE:{0}", sequence.Value));
+
+        ics_contents.AppendLine("BEGIN:VEVENT");
+        ics_contents.AppendLine(string.Format("DTSTART:{0:yyyyMMddTHHmmssZ}", start_time_utc.Value));
+        ics_contents.AppendLine(string.Format("DTSTAMP:{0:yyyyMMddTHHmmssZ}", timestamp_utc.Value));
+        ics_contents.AppendLine(string.Format("DTEND:{0:yyyyMMddTHHmmssZ}", end_time_utc.Value));
+        if (!location.IsNull) ics_contents.AppendLine("LOCATION: " + location.Value);
+        ics_contents.AppendLine(string.Format("UID:{0}", event_identifier.Value));
+        ics_contents.AppendLine(string.Format("DESCRIPTION:{0}", msg.Body));
+        ics_contents.AppendLine(string.Format("X-ALT-DESC;FMTTYPE=text/html:{0}", msg.Body));
+        ics_contents.AppendLine(string.Format("SUMMARY:{0}", msg.Subject));
+        ics_contents.AppendLine(string.Format("ORGANIZER:MAILTO:{0}", msg.From.Address));
+        ics_contents.AppendLine(string.Format("CLASS:{0}", sensitivity.Value.ToUpper()));
+
+        switch (mailPriority)
+        {
+            case MailPriority.Normal:
+                ics_contents.AppendLine("PRIORITY:5");
+                break;
+            case MailPriority.Low:
+                ics_contents.AppendLine("PRIORITY:9");
+                break;
+            case MailPriority.High:
+                ics_contents.AppendLine("PRIORITY:1");
+                break;
+            default:
+                break;
+        }
+
+        string rsvp_string = (require_rsvp.Value ? "PARTSTAT=NEEDS-ACTION;RSVP=TRUE" : "PARTSTAT=ACCEPTED;RSVP=FALSE");
+        bool organizer_in_recipients = false;
+
+        foreach (MailAddress addr in msg.To)
+        {
+            if (addr.Address == msg.From.Address) organizer_in_recipients = true;
+            ics_contents.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{2};CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, recipients_role.Value.ToUpper()));
+        }
+
+        foreach (MailAddress addr in msg.CC)
+        {
+            if (addr.Address == msg.From.Address) organizer_in_recipients = true;
+            ics_contents.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{2};CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, copy_recipients_role.Value.ToUpper()));
+        }
+
+        foreach (MailAddress addr in msg.Bcc)
+        {
+            if (addr.Address == msg.From.Address) organizer_in_recipients = true;
+            ics_contents.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{2};CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, blind_copy_recipients_role.Value.ToUpper()));
+        }
+
+        if (!organizer_in_recipients)
+        {
+            msg.Bcc.Add(msg.From);
+            ics_contents.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=NON-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", msg.From.DisplayName, msg.From.Address));
+        }
+
+        if (use_reminder && method.Value != "CANCEL")
+        {
+            ics_contents.AppendLine("BEGIN:VALARM");
+            ics_contents.AppendLine(string.Format("TRIGGER:-PT{0}M", reminder_minutes.Value));
+            ics_contents.AppendLine("ACTION:DISPLAY");
+            ics_contents.AppendLine("DESCRIPTION:Reminder");
+            ics_contents.AppendLine("END:VALARM");
+        }
+
+        ics_contents.AppendLine("END:VEVENT");
+        ics_contents.AppendLine("END:VCALENDAR");
+
+        #endregion construct ICS file contents
+
+        #region send mail
+
+        try
+        {
+            clr_send_ics_invite_custom(recipients, copy_recipients, blind_copy_recipients, from_address, reply_to, subject, body, body_format, importance, file_attachments, new SqlString(ics_contents.ToString()), method, smtp_servername, port, enable_ssl, use_default_credentials, username, password);
+            if (!suppress_info_messages)
+                SqlContext.Pipe.Send(string.Format("Mail Sent. Event Identifier: {0}", event_identifier.Value));
+        }
+        catch (Exception e)
+        {
+            throw;
+        }
+
+        #endregion send mail
+    }
+
+    [SqlProcedure]
+    public static void clr_send_ics_invite_custom(
+          SqlString recipients, SqlString copy_recipients, SqlString blind_copy_recipients
+        , SqlString from_address, SqlString reply_to
+        , SqlString subject, SqlString body, SqlString body_format
+        , SqlString importance, SqlString file_attachments
+        , SqlString ics_contents, SqlString method
+        , SqlString smtp_servername, SqlInt32 port, SqlBoolean enable_ssl
+        , SqlBoolean use_default_credentials, SqlString username, SqlString password
+        )
+    {
+
+        #region local variable declaration
+
+        ICredentialsByHost credentials = CredentialCache.DefaultNetworkCredentials;
+        MailPriority mailPriority;
+
+        #endregion local variable declaration
+
+        #region default values initialization
+
+        if (subject.IsNull || string.IsNullOrEmpty(subject.Value)) subject = "SQL Server Meeting";
+        if (body_format.IsNull || string.IsNullOrEmpty(body_format.Value)) body_format = "TEXT";
+        if (importance.IsNull || string.IsNullOrEmpty(importance.Value)) importance = "Normal";
+
+        if (smtp_servername.IsNull || string.IsNullOrEmpty(smtp_servername.Value)) smtp_servername = "localhost";
+        if (port.IsNull) port = 25;
+        if (enable_ssl.IsNull) enable_ssl = false;
+
+        if (username.IsNull || string.IsNullOrEmpty(username.Value))
+        {
+            use_default_credentials = true;
+        }
+        else
+        {
+            if (password.IsNull || string.IsNullOrEmpty(password.Value)) password = "";
+            credentials = new NetworkCredential(username.Value, password.Value);
+        }
+
+        if (method.IsNull) method = "REQUEST";
+
+        #endregion default values initialization
+
+        #region validations
+
+        StringBuilder sb_Errors = new StringBuilder();
+
+        if (from_address.IsNull || string.IsNullOrEmpty(from_address.Value)) sb_Errors.AppendLine("Missing sender: Please specify @from_address");
+        if (
+                (recipients.IsNull || string.IsNullOrEmpty(recipients.Value))
+            && (copy_recipients.IsNull || string.IsNullOrEmpty(copy_recipients.Value))
+            && (blind_copy_recipients.IsNull || string.IsNullOrEmpty(blind_copy_recipients.Value))
+           )
+            sb_Errors.AppendLine("Missing recipients: Please specify either @recipients, @copy_recipients or @blind_copy_recipients");
+
+        if (body_format.Value != "HTML" && body_format.Value != "TEXT") sb_Errors.AppendLine(string.Format("@body_format {0} is invalid. Valid values: TEXT, HTML", body_format.Value));
+        if (!Enum.TryParse(method.Value, true, out iCalMethods method_enumvalue)) sb_Errors.AppendLine(string.Format("@method {0} is invalid. Valid values: {1}", method.Value, Enum.GetNames(typeof(iCalMethods)).ToString().ToUpper()));
+        if (!Enum.TryParse(importance.Value, true, out mailPriority)) sb_Errors.AppendLine(string.Format("@importance {0} is invalid. Valid values: {1}", importance.Value, Enum.GetNames(typeof(MailPriority)).ToString().ToUpper()));
+
+        if (sb_Errors.Length > 0) throw new Exception("Unable to send mail due to validation error(s): " + sb_Errors);
+
+        #endregion validations
+
+        #region initialize MailMessage and recipients
 
         MailMessage msg = new MailMessage();
         msg.Subject = subject.Value;
@@ -223,15 +431,15 @@ ORDER BY pa.sequence_number ASC";
 
         if (!file_attachments.IsNull)
         {
-            foreach (var att in file_attachments.Value.Split(';'))
+            foreach (var att_path in file_attachments.Value.Split(';'))
             {
                 try
                 {
-                    msg.Attachments.Add(new Attachment(att));
+                    msg.Attachments.Add(new Attachment(att_path));
                 }
                 catch (Exception e)
                 {
-                    throw new Exception(string.Format("Unable to attach '{0}': {1}", att, e.Message));
+                    throw new Exception(string.Format("Unable to attach '{0}': {1}", att_path, e.Message));
                 }
             }
         }
@@ -283,84 +491,7 @@ ORDER BY pa.sequence_number ASC";
 
         #endregion initialize MailMessage and recipients
 
-#region construct ICS file contents
-
-        StringBuilder str = new StringBuilder();
-        str.AppendLine("BEGIN:VCALENDAR");
-        str.AppendLine(string.Format("PRODID:-//{0}", prod_id.Value));
-        str.AppendLine("VERSION:2.0");
-        str.AppendLine(string.Format("METHOD:{0}", method.Value.ToUpper()));
-        str.AppendLine(string.Format("SEQUENCE:{0}", sequence.Value));
-        
-        str.AppendLine("BEGIN:VEVENT");
-        str.AppendLine(string.Format("DTSTART:{0:yyyyMMddTHHmmssZ}", start_time_utc.Value));
-        str.AppendLine(string.Format("DTSTAMP:{0:yyyyMMddTHHmmssZ}", timestamp_utc.Value));
-        str.AppendLine(string.Format("DTEND:{0:yyyyMMddTHHmmssZ}", end_time_utc.Value));
-        if (!location.IsNull) str.AppendLine("LOCATION: " + location.Value);
-        str.AppendLine(string.Format("UID:{0}", event_identifier.Value));
-        str.AppendLine(string.Format("DESCRIPTION:{0}", msg.Body));
-        str.AppendLine(string.Format("X-ALT-DESC;FMTTYPE=text/html:{0}", msg.Body));
-        str.AppendLine(string.Format("SUMMARY:{0}", msg.Subject));
-        str.AppendLine(string.Format("ORGANIZER:MAILTO:{0}", msg.From.Address));
-        str.AppendLine(string.Format("CLASS:{0}", sensitivity.Value.ToUpper()));
-
-        switch (mailPriority)
-        {
-            case MailPriority.Normal:
-                str.AppendLine("PRIORITY:5");
-                break;
-            case MailPriority.Low:
-                str.AppendLine("PRIORITY:9");
-                break;
-            case MailPriority.High:
-                str.AppendLine("PRIORITY:1");
-                break;
-            default:
-                break;
-        }
-
-        string rsvp_string = (require_rsvp.Value ? "PARTSTAT=NEEDS-ACTION;RSVP=TRUE" : "PARTSTAT=ACCEPTED;RSVP=FALSE");
-        bool organizer_in_recipients = false;
-
-        foreach (MailAddress addr in msg.To)
-        {
-            if (addr.Address == msg.From.Address) organizer_in_recipients = true;
-            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{2};CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, recipients_role.Value.ToUpper()));
-        }
-
-        foreach (MailAddress addr in msg.CC)
-        {
-            if (addr.Address == msg.From.Address) organizer_in_recipients = true;
-            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{2};CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, copy_recipients_role.Value.ToUpper()));
-        }
-
-        foreach (MailAddress addr in msg.Bcc)
-        {
-            if (addr.Address == msg.From.Address) organizer_in_recipients = true;
-            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{2};CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, blind_copy_recipients_role.Value.ToUpper()));
-        }
-
-        if (!organizer_in_recipients)
-        {
-            msg.Bcc.Add(msg.From);
-            str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=NON-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=\"{0}\";X-NUM-GUESTS=0:mailto:{1}", msg.From.DisplayName, msg.From.Address));
-        }
-
-        if (use_reminder && method.Value != "CANCEL")
-        {
-            str.AppendLine("BEGIN:VALARM");
-            str.AppendLine(string.Format("TRIGGER:-PT{0}M", reminder_minutes.Value));
-            str.AppendLine("ACTION:DISPLAY");
-            str.AppendLine("DESCRIPTION:Reminder");
-            str.AppendLine("END:VALARM");
-        }
-
-        str.AppendLine("END:VEVENT");
-        str.AppendLine("END:VCALENDAR");
-
-#endregion construct ICS file contents
-
-#region initialize and configure SmtpClient
+        #region initialize and configure SmtpClient
 
         SmtpClient smtpclient = new SmtpClient();
 
@@ -377,7 +508,7 @@ ORDER BY pa.sequence_number ASC";
 
             AlternateView HTML = AlternateView.CreateAlternateViewFromString(body.Value, new System.Net.Mime.ContentType("text/html"));
             msg.AlternateViews.Add(HTML);
-            AlternateView avCal = AlternateView.CreateAlternateViewFromString(str.ToString(), contype);
+            AlternateView avCal = AlternateView.CreateAlternateViewFromString(ics_contents.Value, contype);
             msg.AlternateViews.Add(avCal);
 
             msg.Headers.Add("Content-class", "urn:content-classes:calendarmessage");
@@ -389,19 +520,17 @@ ORDER BY pa.sequence_number ASC";
 
         #endregion initialize and configure SmtpClient
 
-#region send mail
+        #region send mail
 
         try
         {
             smtpclient.Send(msg);
-            if (!suppress_info_messages)
-                SqlContext.Pipe.Send(string.Format("Mail Sent. Event Identifier: {0}", event_identifier.Value));
         }
         catch (Exception e)
         {
             throw new Exception("Error sending mail: " + e.Message);
         }
 
-#endregion send mail
+        #endregion send mail
     }
 }
