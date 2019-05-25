@@ -281,7 +281,7 @@ ORDER BY pa.sequence_number ASC";
         if (!location.IsNull) ics_contents.AppendLine("LOCATION: " + location.Value);
         ics_contents.AppendLine(string.Format("UID:{0}", event_identifier.Value));
         ics_contents.AppendLine(string.Format("DESCRIPTION:{0}", body.Value));
-        ics_contents.AppendLine(string.Format("X-ALT-DESC;FMTTYPE=text/html:{0}", body.Value));
+        ics_contents.AppendLine(string.Format("X-ALT-DESC;FMTTYPE={0}:{1}", body_format.Value == "HTML" ? "text/html" : "text/plain", body.Value));
         ics_contents.AppendLine(string.Format("SUMMARY:{0}", subject.Value));
         ics_contents.AppendLine(string.Format("ORGANIZER:MAILTO:{0}", msg.From.Address));
         ics_contents.AppendLine(string.Format("CLASS:{0}", sensitivity.Value.ToUpper()));
@@ -507,8 +507,8 @@ ORDER BY pa.sequence_number ASC";
             //contype.Parameters.Add("method", method.Value.ToUpper());
             contype.Parameters.Add("name", "Meeting.ics");
 
-            AlternateView HTML = AlternateView.CreateAlternateViewFromString(body.Value, new System.Net.Mime.ContentType("text/html"));
-            msg.AlternateViews.Add(HTML);
+            AlternateView avBody = AlternateView.CreateAlternateViewFromString(body.Value, new System.Net.Mime.ContentType(body_format.Value == "HTML" ? "text/html" : "text/plain"));
+            msg.AlternateViews.Add(avBody);
             AlternateView avCal = AlternateView.CreateAlternateViewFromString(ics_contents.Value, contype);
             msg.AlternateViews.Add(avCal);
 
