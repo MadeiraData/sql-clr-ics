@@ -20,13 +20,13 @@ CREATE PROCEDURE [dbo].[sp_send_calendar_event]
 	@importance [nvarchar](6) = N'Normal',
 	@sensitivity [nvarchar](12) = N'Public',
 	@file_attachments [nvarchar](max) = NULL,
-	@location [nvarchar](100) = NULL,
+	@location [nvarchar](255) = NULL,
 	@start_time_utc [datetime] = NULL,
 	@end_time_utc [datetime] = NULL,
 	@timestamp_utc [datetime] = NULL,
 	@method [nvarchar](14) = N'REQUEST',
 	@sequence [int] = 0,
-	@prod_id [nvarchar](100) = NULL,
+	@prod_id [nvarchar](255) = NULL,
 	@use_reminder [bit] = 1,
 	@reminder_minutes [int] = 15,
 	@require_rsvp [bit] = 0,
@@ -40,7 +40,7 @@ CREATE PROCEDURE [dbo].[sp_send_calendar_event]
 	@username [nvarchar](255) = NULL,
 	@password [nvarchar](255) = NULL,
 	@suppress_info_messages [bit] = 0,
-	@event_identifier [nvarchar](100) = NULL OUTPUT
+	@event_identifier [nvarchar](255) = NULL OUTPUT
 WITH EXECUTE AS CALLER
 AS
 SET NOCOUNT ON;
