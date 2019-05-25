@@ -280,9 +280,9 @@ ORDER BY pa.sequence_number ASC";
         ics_contents.AppendLine(string.Format("DTEND:{0:yyyyMMddTHHmmssZ}", end_time_utc.Value));
         if (!location.IsNull) ics_contents.AppendLine("LOCATION: " + location.Value);
         ics_contents.AppendLine(string.Format("UID:{0}", event_identifier.Value));
-        ics_contents.AppendLine(string.Format("DESCRIPTION:{0}", msg.Body));
-        ics_contents.AppendLine(string.Format("X-ALT-DESC;FMTTYPE=text/html:{0}", msg.Body));
-        ics_contents.AppendLine(string.Format("SUMMARY:{0}", msg.Subject));
+        ics_contents.AppendLine(string.Format("DESCRIPTION:{0}", body.Value));
+        ics_contents.AppendLine(string.Format("X-ALT-DESC;FMTTYPE=text/html:{0}", body.Value));
+        ics_contents.AppendLine(string.Format("SUMMARY:{0}", subject.Value));
         ics_contents.AppendLine(string.Format("ORGANIZER:MAILTO:{0}", msg.From.Address));
         ics_contents.AppendLine(string.Format("CLASS:{0}", sensitivity.Value.ToUpper()));
 
@@ -503,7 +503,8 @@ ORDER BY pa.sequence_number ASC";
             smtpclient.EnableSsl = enable_ssl.Value;
             smtpclient.Credentials = credentials;
             System.Net.Mime.ContentType contype = new System.Net.Mime.ContentType("text/calendar");
-            contype.Parameters.Add("method", method.Value.ToUpper());
+            contype.Parameters.Add("method", "REQUEST");
+            //contype.Parameters.Add("method", method.Value.ToUpper());
             contype.Parameters.Add("name", "Meeting.ics");
 
             AlternateView HTML = AlternateView.CreateAlternateViewFromString(body.Value, new System.Net.Mime.ContentType("text/html"));
