@@ -54,19 +54,19 @@ exec sp_send_calendar_event
 
 `[ @profile_name = ] 'profile_name'`
 
- Is the name of the profile to send the message from. The *profile_name* is of type **sysname**, with a default of NULL. The *profile_name* must be the name of an existing Database Mail profile. When no *profile_name* is specified, **clr_send_ics_invite** checks whether **@from_address** was specified. If not, it uses the default public profile for the **msdb** database. If **@from_address** wasn't specified, and there is no default public profile for the database, **@profile_name** must be specified.  
+ Is the name of the profile to send the message from. The *profile_name* is of type **sysname**, with a default of NULL. The *profile_name* must be the name of an existing Database Mail profile. When no *profile_name* is specified, **sp_send_calendar_event** checks whether **@from_address** was specified. If not, it uses the default public profile for the **msdb** database. If **@from_address** wasn't specified, and there is no default public profile for the database, **@profile_name** must be specified.  
   
 `[ @recipients = ] 'recipients [ ; ...n ]'`
 
- Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
+ Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error.  
   
 `[ @copy_recipients = ] 'copy_recipients [ ; ...n ]'`
 
- Is a semicolon-delimited list of e-mail addresses to carbon copy the message to. The copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
+ Is a semicolon-delimited list of e-mail addresses to carbon copy the message to. The copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error.  
   
 `[ @blind_copy_recipients = ] 'blind_copy_recipients [ ; ...n ]'`
 
- Is a semicolon-delimited list of e-mail addresses to blind carbon copy the message to. The blind copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
+ Is a semicolon-delimited list of e-mail addresses to blind carbon copy the message to. The blind copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error.  
   
 `[ @from_address = ] 'from_address'`
 
@@ -257,7 +257,7 @@ I also didn't implement any functionality involving multiple accounts per profil
 ```
 DECLARE @EventID nvarchar(255)
  
-EXEC clr_send_ics_invite
+EXEC sp_send_calendar_event
         @from_address = N'the_organizer@gmail.com',
         @recipients = N'someone@gmail.com,otherguy@outlook.com',
         @subject = N'let us meet for pizza!',
@@ -283,7 +283,7 @@ SELECT EventID = @EventID
 ### B. Cancel the previously sent invitation
 
 ```
-EXEC clr_send_ics_invite
+EXEC sp_send_calendar_event
         @from_address = N'the_organizer@gmail.com',
         @recipients = N'someone@gmail.com,otherguy@outlook.com',
         @subject = N'let us meet for pizza!',
@@ -310,7 +310,7 @@ SELECT EventID = @EventID
 ```
 DECLARE @EventID nvarchar(255)
  
-EXEC clr_send_ics_invite
+EXEC sp_send_calendar_event
         @from_address = N'sla_bot@company.com',
         @recipients = N'employee1@company.com,employee2@company.com',
         @subject = N'Weekly SLA Shift',
