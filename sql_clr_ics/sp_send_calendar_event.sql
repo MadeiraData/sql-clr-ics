@@ -1,4 +1,8 @@
 ﻿/*
+	sql_clr_ics copyright (c) Eitan Blumin
+---------------------------------------------------
+Source: https://github.com/EitanBlumin/sql_clr_ics
+License: MIT (https://github.com/EitanBlumin/sql_clr_ics/blob/master/LICENSE)
 ---------------------------------------------------
 This serves as a wrapper for the CLR stored procedure with default values for parameters
 (which is not possible natively for all data types in the CLR procedure itself)
