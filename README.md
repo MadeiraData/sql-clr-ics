@@ -1,4 +1,4 @@
-# sql_clr_ics: clr_send_ics_invite
+# sql_clr_ics: clr_send_ics_invite, sp_send_calendar_event
 
 Send Calendar Event / Appointment Invitations (iCal formatted file) from within SQL Server using a CLR stored procedure
 
@@ -14,7 +14,7 @@ Alternatively, you can use [this simple installation script](https://github.com/
 ## Syntax
 
 ```
-exec clr_send_ics_invite
+exec sp_send_calendar_event
 	[   [ @profile_name = ] 'profile_name' ]
 	[ , [ @recipients = ] 'recipients [ ; ...n ]' ]
 	[ , [ @copy_recipients = ] 'copy_recipients [ ; ...n ]' ]
@@ -58,23 +58,23 @@ exec clr_send_ics_invite
   
 `[ @recipients = ] 'recipients'`
 
- Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type **nvarchar(4000)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
+ Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
   
 `[ @copy_recipients = ] 'copy_recipients'`
 
- Is a semicolon-delimited list of e-mail addresses to carbon copy the message to. The copy recipients list is of type **nvarchar(4000)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
+ Is a semicolon-delimited list of e-mail addresses to carbon copy the message to. The copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
   
 `[ @blind_copy_recipients = ] 'blind_copy_recipients'`
 
- Is a semicolon-delimited list of e-mail addresses to blind carbon copy the message to. The blind copy recipients list is of type **nvarchar(4000)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
+ Is a semicolon-delimited list of e-mail addresses to blind carbon copy the message to. The blind copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **clr_send_ics_invite** returns an error.  
   
 `[ @from_address = ] 'from_address'`
 
- Is the value of the 'from address' of the email message, and the organizer of the calendar meeting. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, the default is NULL.
+ Is the value of the 'from address' of the email message, and the organizer of the calendar meeting. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(max)**. If no parameter is specified, the default is NULL.
   
 `[ @reply_to = ] 'reply_to'`
 
- Is the value of the 'reply to address' of the email message. It accepts only one email address as a valid value. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, the default is NULL.  
+ Is the value of the 'reply to address' of the email message. It accepts only one email address as a valid value. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(max)**. If no parameter is specified, the default is NULL.  
   
 `[ @subject = ] 'subject'`
 
@@ -82,7 +82,7 @@ exec clr_send_ics_invite
   
 `[ @body = ] 'body'`
 
- Is the body of the e-mail message. The message body is of type **nvarchar(4000)**, with a default of NULL.  
+ Is the body of the e-mail message. The message body is of type **nvarchar(max)**, with a default of NULL.  
   
 `[ @body_format = ] 'body_format'`
 
@@ -115,11 +115,11 @@ exec clr_send_ics_invite
   
 `[ @file_attachments = ] 'file_attachments'`
 
- Is a semicolon-delimited list of file names to attach to the e-mail message. Files in the list must be specified as absolute paths. The attachments list is of type **nvarchar(4000)**. By default, Database Mail limits file attachments to 1 MB per file.  
+ Is a semicolon-delimited list of file names to attach to the e-mail message. Files in the list must be specified as absolute paths. The attachments list is of type **nvarchar(max)**. By default, Database Mail limits file attachments to 1 MB per file.  
 
 `[ @location = ] 'location'`
 
- Is the location of the calendar meeting. The parameter is of type **nvarchar(4000)**, with a default of NULL.
+ Is the location of the calendar meeting. The parameter is of type **nvarchar(255)**, with a default of NULL.
 	
 `[ @start_time_utc = ] 'start_time_utc'`
 
@@ -154,7 +154,7 @@ exec clr_send_ics_invite
  
 `[ @prod_id = ] 'prod_id'`
 
- Is the PRODID property of the calendar meeting. The parameter is of type **nvarchar(4000)**, with a default of 'Schedule a Meeting'.
+ Is the PRODID property of the calendar meeting. The parameter is of type **nvarchar(255)**, with a default of 'Schedule a Meeting'.
  
 `[ @use_reminder = ] use_reminder`
 
@@ -203,7 +203,7 @@ Defaults to NON-PARTICIPANT.
 
 `[ @smtp_servername = ] 'smtp_servername'`
 
- Is the SMTP server name to be used for sending the e-mail message. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, and no mail profile was used, the default is 'localhost'.
+ Is the SMTP server name to be used for sending the e-mail message. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(255)**. If no parameter is specified, and no mail profile was used, the default is 'localhost'.
  
 `[ @port = ] port`
 
@@ -219,11 +219,11 @@ Defaults to NON-PARTICIPANT.
  
 `[ @username = ] username`
 
- Is the userame to be used when authenticating with the SMTP server. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, and no mail profile was used, the default is to use the server's default network credentials instead.
+ Is the userame to be used when authenticating with the SMTP server. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(255)**. If no parameter is specified, and no mail profile was used, the default is to use the server's default network credentials instead.
  
 `[ @password = ] password`
 
- Is the password to be used when authenticating with the SMTP server. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(4000)**. If no parameter is specified, the default is to use an empty string for the password.
+ Is the password to be used when authenticating with the SMTP server. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(255)**. If no parameter is specified, the default is to use an empty string for the password.
 
 | **NOTE:**  Unfortunately, since MSDB doesn't allow access to the mail profile passwords, it's impossible to utilize an existing mail profile for getting the password for an SMTP server. Therefore, unless you want to use an empty password or default network credentials, *you must specify a value for this parameter*. |
 | --- |
@@ -234,7 +234,7 @@ Defaults to NON-PARTICIPANT.
 	
 `[ @event_identifier = ] event_identifier [ OUTPUT ]`
 
- Optional output parameter returns the *event_identifier* of the calendar meeting. You may also override this value by specifying a parameter with a non-null value for it, in order to uniquely identify a calendar event. If no *event_identifier* was specified, a Global Unique Identifier (Guid) will automatically be generated instead. This parameter must be specified when **@method** is 'CANCEL'. The *event_identifier* is of type **nvarchar(4000)**.
+ Optional output parameter returns the *event_identifier* of the calendar meeting. You may also override this value by specifying a parameter with a non-null value for it, in order to uniquely identify a calendar event. If no *event_identifier* was specified, a Global Unique Identifier (Guid) will automatically be generated instead. This parameter must be specified when **@method** is 'CANCEL'. The *event_identifier* is of type **nvarchar(255)**.
   
 ## Result Sets  
 
@@ -244,7 +244,7 @@ Defaults to NON-PARTICIPANT.
 
 ## Remarks
 
-I did my best to align the parameters of this procedure with Microsoft's **sp_send_dbmail** procedure. Unfortunately, since this is a CLR procedure, there are limitations to what can be done. Specifically, it's impossible to define default values for parameters of type **nvarchar(max)** and **varchar(max)**, and so I had to replace those with **nvarchar(4000)**.
+I did my best to align the parameters of this procedure with Microsoft's **sp_send_dbmail** procedure. Unfortunately, since this is a CLR procedure, there are limitations to what can be done. Specifically, it's impossible to define default values for parameters of type **nvarchar(max)** and **varchar(max)**, and so I had to create a wrapper procedure in T-SQL instead.
 
 Even though I tried to utilize Microsoft's Database Mail Profile mechanics, I couldn't get access to the account passwords (which is probably a good thing), and so the **@password** parameter becomes mandatory (unless you want to use an empty password or the server's default network credentials).
 
@@ -255,14 +255,14 @@ I also didn't implement any functionality involving multiple accounts per profil
 ### A. Send a calendar invitation with RSVP requirement
 
 ```
-DECLARE @EventID nvarchar(4000)
+DECLARE @EventID nvarchar(255)
  
 EXEC clr_send_ics_invite
         @from_address = N'the_organizer@gmail.com',
         @recipients = N'someone@gmail.com,otherguy@outlook.com',
         @subject = N'let us meet for pizza!',
         @body = N'<h1>Pizza!</h1><p>Bring your own beer!</p>',
-	@body_format = N'HTML',
+        @body_format = N'HTML',
         @location = N'The Pizza place at Hank and Errison corner',
         @start_time_utc = '2019-07-02 19:00',
         @end_time_utc = '2019-07-02 23:00',
@@ -288,7 +288,7 @@ EXEC clr_send_ics_invite
         @recipients = N'someone@gmail.com,otherguy@outlook.com',
         @subject = N'let us meet for pizza!',
         @body = N'<h1>Pizza!</h1><p>Bring your own beer!</p>',
-	@body_format = N'HTML',
+        @body_format = N'HTML',
         @location = N'The Pizza place at Hank and Errison corner',
         @start_time_utc = '2019-07-02 19:00',
         @end_time_utc = '2019-07-02 23:00',
@@ -308,14 +308,14 @@ SELECT EventID = @EventID
 ### C. Send an automated calendar invitation without RSVP requirement (i.e. participants are auto-accepted)
 
 ```
-DECLARE @EventID nvarchar(4000)
+DECLARE @EventID nvarchar(255)
  
 EXEC clr_send_ics_invite
         @from_address = N'sla_bot@company.com',
         @recipients = N'employee1@company.com,employee2@company.com',
         @subject = N'Weekly SLA Shift',
         @body = N'<h1>You are on-call this week!</h1><p>This is an automated message</p>',
-	@body_format = N'HTML',
+        @body_format = N'HTML',
         @location = N'Our offices',
         @start_time_utc = '2019-07-01 00:00',
         @end_time_utc = '2019-07-04 23:59',
