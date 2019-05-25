@@ -1,4 +1,4 @@
-# sql_clr_ics: clr_send_ics_invite, sp_send_calendar_event
+# sp_send_calendar_event
 
 Send Calendar Event / Appointment Invitations (iCal formatted file) from within SQL Server using a CLR stored procedure
 
@@ -43,7 +43,7 @@ exec sp_send_calendar_event
 	[ , [ @smtp_servername = ] 'smtp_servername' ]
 	[ , [ @port = ] port ]
 	[ , [ @enable_ssl = ] 1 | 0 ]
-        [ , [ @use_default_credentials = ] use_default_credentials ]
+        [ , [ @use_default_credentials = ] 1 | 0 ]
 	[ , [ @username = ] 'username' ]
 	[ , [ @password = ] 'password' ]
 	[ , [ @suppress_info_messages = ] 1 | 0 ]
