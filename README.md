@@ -87,7 +87,7 @@ exec sp_send_calendar_event
   
 `[ @body_format = ] 'TEXT | HTML'`
 
- Is the format of the message body. The parameter is of type **varchar(20)**, with a default of NULL. When specified, the headers of the outgoing message are set to indicate that the message body has the specified format. The parameter may contain one of the following values:  
+ Is the format of the message body. The parameter is of type **varchar(20)**. When specified, the headers of the outgoing message are set to indicate that the message body has the specified format. The parameter may contain one of the following values:  
   
 -   TEXT
 -   HTML  
