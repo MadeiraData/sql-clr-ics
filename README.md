@@ -59,19 +59,19 @@ exec sp_send_calendar_event
   
 `[ @recipients = ] 'recipients [ ; ...n ]'`
 
- Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error.
+ Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error. This parameter maps to the [ATTENDEE property of the iCal spec](https://www.kanzaki.com/docs/ical/attendee.html).
   
 `[ @copy_recipients = ] 'copy_recipients [ ; ...n ]'`
 
- Is a semicolon-delimited list of e-mail addresses to carbon copy the message to. The copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error.  
+ Is a semicolon-delimited list of e-mail addresses to carbon copy the message to. The copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error. This parameter maps to the [ATTENDEE property of the iCal spec](https://www.kanzaki.com/docs/ical/attendee.html).
   
 `[ @blind_copy_recipients = ] 'blind_copy_recipients [ ; ...n ]'`
 
- Is a semicolon-delimited list of e-mail addresses to blind carbon copy the message to. The blind copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error.  
+ Is a semicolon-delimited list of e-mail addresses to blind carbon copy the message to. The blind copy recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error. This parameter maps to the [ATTENDEE property of the iCal spec](https://www.kanzaki.com/docs/ical/attendee.html).
   
 `[ @from_address = ] 'from_address'`
 
- Is the value of the 'from address' of the email message, and the organizer of the calendar meeting. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(max)**. If no parameter is specified, the default is NULL.
+ Is the value of the 'from address' of the email message, and the organizer of the calendar meeting. This is an optional parameter used to override the settings in the mail profile (or if no mail profile was specified). This parameter is of type **nvarchar(max)**. If no parameter is specified, the default is NULL. This parameter maps to the [ORGANIZER property of the iCal spec](https://www.kanzaki.com/docs/ical/organizer.html).
   
 `[ @reply_to = ] 'reply_to'`
 
@@ -79,11 +79,11 @@ exec sp_send_calendar_event
   
 `[ @subject = ] 'subject'`
 
- Is the subject of the e-mail message. The subject is of type **nvarchar(255)**. If no subject is specified, the default is 'SQL Server Meeting'.  
+ Is the subject of the e-mail message. The subject is of type **nvarchar(255)**. If no subject is specified, the default is 'SQL Server Meeting'. This parameter maps to the [SUMMARY property of the iCal spec](https://www.kanzaki.com/docs/ical/summary.html).
   
 `[ @body = ] 'body'`
 
- Is the body of the e-mail message. The message body is of type **nvarchar(max)**, with a default of NULL.  
+ Is the body of the e-mail message. The message body is of type **nvarchar(max)**, with a default of NULL. This parameter maps to the [DESCRIPTION property of the iCal spec](https://www.kanzaki.com/docs/ical/description.html).
   
 `[ @body_format = ] 'TEXT | HTML'`
 
@@ -241,7 +241,7 @@ Defaults to NON-PARTICIPANT.
  
 `[ @ics_contents = ] 'ics_contents' [ OUTPUT ]`
 
- Optional output parameter returns the entire ICS attachment contents, as per the [iCal standard specifications](https://www.kanzaki.com/docs/ical/) for a **VCALENDAR** document with a **VEVENT** calendar component. This value is constructed dynamically based on the previous parameters that you can specify. However, you may also override this value by specifying a parameter with a non-null value for it, in order to completely ignore all the iCal-related parameters of the procedure, and try to send your own custom-made ICS attachment file. This means that you can construct your own VCALENDAR document, and try to implement various advanced functionalities not natively covered by **sp_send_calendar_event**, or even send a calendar component other than VEVENT, such as [VTODO](https://www.kanzaki.com/docs/ical/vtodo.html) or [VJOURNAL](https://www.kanzaki.com/docs/ical/vjournal.html).
+ Optional output parameter returns the entire ICS attachment contents, as per the [iCal standard specifications](https://www.kanzaki.com/docs/ical/) for a **VCALENDAR** document with a **VEVENT** calendar component. The parameter is of type **nvarchar(max)**, with a default of NULL. This value is constructed dynamically based on the previous parameters that you can specify. However, you may also override this value by specifying a parameter with a non-null value for it, in order to completely ignore all the iCal-related parameters of the procedure, and try to send your own custom-made ICS attachment file. This means that you can construct your own VCALENDAR document, and try to implement various advanced functionalities not natively covered by **sp_send_calendar_event**, or even send a calendar component other than VEVENT, such as [VTODO](https://www.kanzaki.com/docs/ical/vtodo.html) or [VJOURNAL](https://www.kanzaki.com/docs/ical/vjournal.html).
   
 ## Result Sets  
 
