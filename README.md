@@ -1,9 +1,8 @@
+> NOTE: [V2.0](https://github.com/EitanBlumin/sql-clr-ics/tree/v2.0) has entered Beta testing stage, be sure to [check it out](https://github.com/EitanBlumin/sql-clr-ics/tree/v2.0) for more features and better functionality
+
 # sql_clr_ics: clr_send_ics_invite
 
 Send Calendar Event / Appointment Invitations (iCal formatted file) from within SQL Server using a CLR stored procedure.
-
-|NOTE: [V2.0](https://github.com/EitanBlumin/sql-clr-ics/tree/v2.0) has entered Beta testing stage, be sure to [check it out](https://github.com/EitanBlumin/sql-clr-ics/tree/v2.0) for more features and better functionality|
-| --- |
 
 ## Background
 
