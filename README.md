@@ -48,6 +48,7 @@ exec sp_send_calendar_event
 	[ , [ @password = ] 'password' ]
 	[ , [ @suppress_info_messages = ] 1 | 0 ]
 	[ , [ @event_identifier = ] 'event_identifier' [ OUTPUT ] ]
+	[ , [ @ics_contents = ] 'ics_contents' [ OUTPUT ] ]
 ```
 
 ## Arguments  
@@ -58,7 +59,7 @@ exec sp_send_calendar_event
   
 `[ @recipients = ] 'recipients [ ; ...n ]'`
 
- Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error.  
+ Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type **nvarchar(max)**. Although this parameter is optional, at least one of **@recipients**, **@copy_recipients**, or **@blind_copy_recipients** must be specified, or **sp_send_calendar_event** returns an error.
   
 `[ @copy_recipients = ] 'copy_recipients [ ; ...n ]'`
 
@@ -101,11 +102,13 @@ exec sp_send_calendar_event
 -   Normal  
 -   High  
   
- Defaults to Normal.  
+ Defaults to Normal.
+ 
+ The parameter is implemented using the [System.Net.Mail.MailPriority](https://docs.microsoft.com/en-us/dotnet/api/system.net.mail.mailpriority) enum, and maps to the [PRIORITY property of the iCal spec](https://www.kanzaki.com/docs/ical/priority.html), based on a CUA with a three-level priority scheme.
   
 `[ @sensitivity = ] 'PUBLIC | PRIVATE | CONFIDENTIAL'`
 
- Is the sensitivity classification of the message. The parameter is of type **nvarchar(12)**. The parameter may contain one of the following values:  
+ Is the sensitivity classification of the message. The parameter is of type **nvarchar(12)**. The parameter may contain one of the following values, as per the [CLASS property of the iCal spec](https://www.kanzaki.com/docs/ical/class.html):  
   
 -   Public
 -   Private    
@@ -119,23 +122,23 @@ exec sp_send_calendar_event
 
 `[ @location = ] 'location'`
 
- Is the location of the calendar meeting. The parameter is of type **nvarchar(255)**, with a default of NULL.
+ Is the location of the calendar meeting. The parameter is of type **nvarchar(255)**, with a default of NULL. The parameter maps to the [LOCATION property of the iCal spec](https://www.kanzaki.com/docs/ical/location.html).
 	
 `[ @start_time_utc = ] 'start_time_utc'`
 
- Is the start time of the calendar meeting, in UTC. The parameter is of type **datetime**. If the parameter is not specified, it defaults to **@timestamp_utc** + 5 hours.
+ Is the start time of the calendar meeting, in UTC. The parameter is of type **datetime**. If the parameter is not specified, it defaults to **@timestamp_utc** + 5 hours. The parameter maps to the [DTSTART property of the iCal spec](https://www.kanzaki.com/docs/ical/dtstart.html)
  
 `[ @end_time_utc = ] 'end_time_utc'`
 
- Is the end time of the calendar meeting, in UTC. The parameter is of type **datetime**. If the parameter is not specified, it defaults to **@start_time_utc** + 1 hour.
+ Is the end time of the calendar meeting, in UTC. The parameter is of type **datetime**. If the parameter is not specified, it defaults to **@start_time_utc** + 1 hour. The parameter maps to the [DTEND property of the iCal spec](https://www.kanzaki.com/docs/ical/dtend.html).
  
 `[ @timestamp_utc = ] 'timestamp_utc'`
 
- Is the DTSTAMP property of the calendar meeting, in UTC. The parameter is of type **datetime**. If the parameter is not specified, it defaults to current UTC time.
+ Is the date and time when the calendar event was created, in UTC. The parameter is of type **datetime**. If the parameter is not specified, it defaults to current UTC time. The parameter maps to the [DTSTAMP property of the iCal spec](https://www.kanzaki.com/docs/ical/dtstamp.html).
 
 `[ @method = ] 'PUBLISH | REQUEST | REPLY | CANCEL | ADD | REFRESH | COUNTER | DECLINECOUNTER'`
 
- Is the method of the calendar event message. The parameter is of type **nvarchar(14)**. The parameter may contain one of the following values:  
+ Is the method of the calendar event message. The parameter is of type **nvarchar(14)**. The parameter may contain one of the following values, as per the [METHOD property of the iCalendar Transport-independent Interoperability Protocol (iTIP)](https://documentation.open-xchange.com/7.10.1/middleware/components/calendar/iTip.html#methods):  
   
 -   PUBLISH
 -   REQUEST
@@ -150,27 +153,27 @@ exec sp_send_calendar_event
 
 `[ @sequence = ] sequence`
 
- Is the sequence of the calendar event message. The parameter is of type **int**, with a default of 0. Unless **@method** is specified as 'CANCEL', in which case the default would be 1. Proper usage of this parameter is important when updating existing calendar events, since each consecutive update must have a higher sequence number than the one before it.
+ Is the sequence of the calendar event message. The parameter is of type **int**, with a default of 0. Unless **@method** is specified as 'CANCEL', in which case the default would be 1. Proper usage of this parameter is important when updating existing calendar events, since each consecutive update must have a higher sequence number than the one before it. This parameter maps to the [SEQUENCE property of the iCal spec](https://www.kanzaki.com/docs/ical/sequence.html).
  
 `[ @prod_id = ] 'prod_id'`
 
- Is the PRODID property of the calendar meeting. The parameter is of type **nvarchar(255)**, with a default of 'Schedule a Meeting'.
+ Is the PRODID property of the calendar meeting. The parameter is of type **nvarchar(255)**, with a default of 'Schedule a Meeting'.  This parameter maps to the [PRODID property of the iCal spec](https://www.kanzaki.com/docs/ical/prodid.html).
  
 `[ @use_reminder = ] 1 | 0`
 
- Determines whether to add a reminder to the event. The parameter is of type **bit**, with a default of 1 (true).
+ Determines whether to add a reminder to the event. The parameter is of type **bit**, with a default of 1 (true), which adds a [VALARM component](https://www.kanzaki.com/docs/ical/valarm.html) to the iCal document.
  
 `[ @reminder_minutes = ] reminder_minutes`
 
- Is the number of minutes to set for the event reminder. The parameter is of type **int**, with a default of 15.
+ Is the number of minutes to set for the event reminder. The parameter is of type **int**, with a default of 15. The parameter maps to the [TRIGGER property of the iCal spec](https://www.kanzaki.com/docs/ical/trigger.html).
  
 `[ @require_rsvp = ] 1 | 0`
 
- Determines whether participants are required to respond with an RSVP. The parameter is of type **bit**, with a default of 0 (false). If this parameter equals to 0 (false), then all participants are assumed to have accepted their invitation, without requesting a response.
+ Determines whether participants are required to respond with an RSVP. The parameter is of type **bit**, with a default of 0 (false). If this parameter equals to 0 (false), then all participants are assumed to have accepted their invitation, without requesting a response. The parameter maps to the [PARTSTAT](https://www.kanzaki.com/docs/ical/partstat.html) and [RSVP](https://www.kanzaki.com/docs/ical/rsvp.html) properties of the iCal spec.
  
 `[ @recipients_role = ] 'REQ-PARTICIPANT | OPT-PARTICIPANT | NON-PARTICIPANT | CHAIR'`
 
- Is the meeting role for the participants specified in the **@recipients** parameter. The parameter is of type **nvarchar(15)**. The parameter may contain one of the following values:
+ Is the meeting role for the participants specified in the **@recipients** parameter. The parameter is of type **nvarchar(15)**. The parameter may contain one of the following values, as per the [ROLE property of the iCal spec](https://www.kanzaki.com/docs/ical/role.html):
  
 - REQ-PARTICIPANT
 - OPT-PARTICIPANT
@@ -181,7 +184,7 @@ Defaults to REQ-PARTICIPANT.
  
 `[ @copy_recipients_role = ] 'REQ-PARTICIPANT | OPT-PARTICIPANT | NON-PARTICIPANT | CHAIR'`
 
- Is the meeting role for the participants specified in the **@copy_recipients** parameter. The parameter is of type **nvarchar(15)**. The parameter may contain one of the following values:
+ Is the meeting role for the participants specified in the **@copy_recipients** parameter. The parameter is of type **nvarchar(15)**. The parameter may contain one of the following values, as per the [ROLE property of the iCal spec](https://www.kanzaki.com/docs/ical/role.html):
  
 - REQ-PARTICIPANT
 - OPT-PARTICIPANT
@@ -192,7 +195,7 @@ Defaults to OPT-PARTICIPANT.
 
 `[ @blind_copy_recipients_role = ] 'REQ-PARTICIPANT | OPT-PARTICIPANT | NON-PARTICIPANT | CHAIR'`
 
- Is the meeting role for the participants specified in the **@blind_copy_recipients** parameter. The parameter is of type **nvarchar(15)**. The parameter may contain one of the following values:
+ Is the meeting role for the participants specified in the **@blind_copy_recipients** parameter. The parameter is of type **nvarchar(15)**. The parameter may contain one of the following values, as per the [ROLE property of the iCal spec](https://www.kanzaki.com/docs/ical/role.html):
  
 - REQ-PARTICIPANT
 - OPT-PARTICIPANT
@@ -234,7 +237,11 @@ Defaults to NON-PARTICIPANT.
 	
 `[ @event_identifier = ] 'event_identifier' [ OUTPUT ]`
 
- Optional output parameter returns the *event_identifier* of the calendar meeting. You may also override this value by specifying a parameter with a non-null value for it, in order to uniquely identify a calendar event. If no *event_identifier* was specified, a Global Unique Identifier (Guid) will automatically be generated instead. This parameter must be specified when **@method** is 'CANCEL'. The *event_identifier* is of type **nvarchar(255)**.
+ Optional output parameter returns the *event_identifier* of the calendar meeting. You may also override this value by specifying a parameter with a non-null value for it, in order to uniquely identify a calendar event. If no *event_identifier* was specified, a Global Unique Identifier (Guid) will automatically be generated instead. This parameter must be specified when **@method** is 'CANCEL'. The *event_identifier* is of type **nvarchar(255)**, and maps to the [UID property of the iCal spec](https://www.kanzaki.com/docs/ical/uid.html).
+ 
+`[ @ics_contents = ] 'ics_contents' [ OUTPUT ]`
+
+ Optional output parameter returns the entire ICS attachment contents, as per the [iCal standard specifications](https://www.kanzaki.com/docs/ical/) for a **VCALENDAR** document with a **VEVENT** calendar component. This value is constructed dynamically based on the previous parameters that you can specify. However, you may also override this value by specifying a parameter with a non-null value for it, in order to completely ignore all the iCal-related parameters of the procedure, and try to send your own custom-made ICS attachment file. This means that you can construct your own VCALENDAR document, and try to implement various advanced functionalities not natively covered by **sp_send_calendar_event**, or even send a calendar component other than VEVENT, such as [VTODO](https://www.kanzaki.com/docs/ical/vtodo.html) or [VJOURNAL](https://www.kanzaki.com/docs/ical/vjournal.html).
   
 ## Result Sets  
 
@@ -341,13 +348,9 @@ More info in [the license file](https://github.com/EitanBlumin/sql_clr_ics/blob/
 
 ## Acknowledgements
 
-This project was based mostly on the following stack overflow discussion:
+This project was based mostly on the following stack overflow discussion: [Send email to Outlook with ics meeting appointment](https://stackoverflow.com/questions/22734403/send-email-to-outlook-with-ics-meeting-appointment)
 
-[https://stackoverflow.com/questions/22734403/send-email-to-outlook-with-ics-meeting-appointment](https://stackoverflow.com/questions/22734403/send-email-to-outlook-with-ics-meeting-appointment)
-
-Also used the iCal specification for further improvements:
-
-[https://www.kanzaki.com/docs/ical/](https://www.kanzaki.com/docs/ical/)
+Also used the [RFC 2445 iCalendar specification](https://www.ietf.org/rfc/rfc2445.txt) as reference for further improvements and fine-tuning.
 
 ## See Also  
  [sp_send_dbmail](https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-send-dbmail-transact-sql)   
