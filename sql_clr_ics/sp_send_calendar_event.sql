@@ -40,8 +40,9 @@ CREATE PROCEDURE [dbo].[sp_send_calendar_event]
 	@username [nvarchar](255) = NULL,
 	@password [nvarchar](255) = NULL,
 	@suppress_info_messages [bit] = 0,
-	@event_identifier [nvarchar](255) = NULL OUTPUT
+	@event_identifier [nvarchar](255) = NULL OUTPUT,
+	@ics_contents [nvarchar](MAX) = NULL OUTPUT
 WITH EXECUTE AS CALLER
 AS
 SET NOCOUNT ON;
-EXEC dbo.[clr_send_ics_invite] @profile_name, @recipients, @copy_recipients, @blind_copy_recipients, @from_address, @reply_to, @subject, @body, @body_format, @importance, @sensitivity, @file_attachments, @location, @start_time_utc, @end_time_utc, @timestamp_utc, @method, @sequence, @prod_id, @use_reminder, @reminder_minutes, @require_rsvp, @recipients_role, @copy_recipients_role, @blind_copy_recipients_role, @smtp_servername, @port, @enable_ssl, @use_default_credentials, @username, @password, @suppress_info_messages, @event_identifier OUTPUT
+EXEC dbo.[clr_send_ics_invite] @profile_name, @recipients, @copy_recipients, @blind_copy_recipients, @from_address, @reply_to, @subject, @body, @body_format, @importance, @sensitivity, @file_attachments, @location, @start_time_utc, @end_time_utc, @timestamp_utc, @method, @sequence, @prod_id, @use_reminder, @reminder_minutes, @require_rsvp, @recipients_role, @copy_recipients_role, @blind_copy_recipients_role, @smtp_servername, @port, @enable_ssl, @use_default_credentials, @username, @password, @suppress_info_messages, @event_identifier OUTPUT, @ics_contents OUTPUT
