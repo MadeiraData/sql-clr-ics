@@ -2,6 +2,10 @@
 
 Send Calendar Event / Appointment Invitations (iCal formatted file) from within SQL Server using a CLR stored procedure
 
+## Background
+
+[Click here for some background information about this project](https://eitanblumin.com/2019/05/23/new-open-source-project-clr-ics-send-calendar-invites-from-within-sql-server/).
+
 ## Prerequisites
 
 The CLR assembly in this project can only be deployed to a database with the **trustworthy** setting on, due to the assembly requiring the **UNSAFE permission set**.
