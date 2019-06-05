@@ -306,7 +306,7 @@ EXEC sp_send_calendar_event
         @username = N'the_organizer@gmail.com',
         @password = N'NotActuallyMyPassword',
         @require_rsvp = 1,
-        @cancel_event_identifier = @EventID,
+        @method = 'CANCEL',
         @event_identifier = @EventID OUTPUT
  
 SELECT EventID = @EventID
