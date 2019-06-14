@@ -1,6 +1,10 @@
 # sp_send_calendar_event
 
-Send Calendar Event / Appointment Invitations (iCal formatted file) from within SQL Server using a CLR stored procedure
+Send Calendar Event / Appointment Invitations (iCal formatted file) from within SQL Server using a CLR stored procedure.
+
+## Background
+
+[Click here for some background information about this project](https://eitanblumin.com/2019/05/23/new-open-source-project-clr-ics-send-calendar-invites-from-within-sql-server/).
 
 ## Prerequisites
 
