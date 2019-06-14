@@ -74,14 +74,14 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PostDeploy Include="Script.PostDeployment.sql" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="sql_clr_ics.publish.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="sql_clr_ics_install.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="sp_send_calendar_event.sql" />
   </ItemGroup>
 </Project>
