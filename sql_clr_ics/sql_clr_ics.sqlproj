@@ -32,8 +32,8 @@
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>sql_clr_ics_pkey.pfx</AssemblyOriginatorKeyFile>
     <TargetFrameworkProfile />
-    <GenerateSqlClrSymbols>False</GenerateSqlClrSymbols>
-    <GenerateSqlClrDdl>False</GenerateSqlClrDdl>
+    <GenerateSqlClrSymbols>True</GenerateSqlClrSymbols>
+    <GenerateSqlClrDdl>True</GenerateSqlClrDdl>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
