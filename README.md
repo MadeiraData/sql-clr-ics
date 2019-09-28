@@ -2,6 +2,20 @@
 
 Send Calendar Event / Appointment Invitations (iCal formatted file) from within SQL Server using a CLR stored procedure.
 
+In this page:
+
+- [Background](#background)
+- [Prerequisites](#prerequisites)
+- [Installation](#instalation)
+- [Syntax](#syntax)
+- [Arguments](#arguments)
+- [Result Sets](#result-sets)
+- [Remarks](#remarks)
+- [Examples](#examples)
+- [License and Copyright](#license-and-copyright)
+- [Acknowledgements](#acknowledgements)
+- [See Also](#see-also)
+
 ## Background
 
 [Click here for some background information about this project](https://eitanblumin.com/2019/05/23/new-open-source-project-clr-ics-send-calendar-invites-from-within-sql-server/).
@@ -278,7 +292,7 @@ EXEC sp_send_calendar_event
         @start_time_utc = '2019-07-02 19:00',
         @end_time_utc = '2019-07-02 23:00',
         @timestamp_utc = '2019-03-30 18:00',
-        @smtp_server = 'smtp.gmail.com',
+        @smtp_servername = 'smtp.gmail.com',
         @port = 465,
         @enable_ssl = 1,
         @username = N'the_organizer@gmail.com',
@@ -304,7 +318,7 @@ EXEC sp_send_calendar_event
         @start_time_utc = '2019-07-02 19:00',
         @end_time_utc = '2019-07-02 23:00',
         @timestamp_utc = '2019-03-30 18:00',
-        @smtp_server = 'smtp.gmail.com',
+        @smtp_servername = 'smtp.gmail.com',
         @port = 465,
         @enable_ssl = 1,
         @username = N'the_organizer@gmail.com',
@@ -331,7 +345,7 @@ EXEC sp_send_calendar_event
         @start_time_utc = '2019-07-01 00:00',
         @end_time_utc = '2019-07-04 23:59',
         @timestamp_utc = '2019-05-01 00:00',
-        @smtp_server = 'smtp.company.com',
+        @smtp_servername = 'smtp.company.com',
         @port = 587,
         @enable_ssl = 1,
         @username = N'sla_bot@company.com',
