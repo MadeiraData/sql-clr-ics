@@ -9,7 +9,7 @@
                SELECT * FROM [$(TableName)]					
 --------------------------------------------------------------------------------------
 */
-use master;
+use [master];
 GO
 IF NOT EXISTS (select * from sys.asymmetric_keys WHERE name = 'sql_clr_ics_pkey')
 	create asymmetric key sql_clr_ics_pkey
