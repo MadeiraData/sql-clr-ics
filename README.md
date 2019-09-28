@@ -6,7 +6,7 @@ In this page:
 
 - [Background](#background)
 - [Prerequisites](#prerequisites)
-- [Installation](#instalation)
+- [Installation](#installation)
 - [Syntax](#syntax)
 - [Arguments](#arguments)
 - [Result Sets](#result-sets)
