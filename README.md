@@ -371,6 +371,7 @@ This project was based mostly on the following stack overflow discussion: [Send 
 Also used the [RFC 2445 iCalendar specification](https://www.ietf.org/rfc/rfc2445.txt) as reference for further improvements and fine-tuning.
 
 ## See Also  
- [sp_send_dbmail](https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-send-dbmail-transact-sql)   
- [clr_http_request](https://github.com/EitanBlumin/ClrHttpRequest)   
- [clr_wmi_request](https://github.com/EitanBlumin/ClrWmiRequest)
+
+- [sp_send_dbmail](https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-send-dbmail-transact-sql)   
+- [clr_http_request](https://github.com/EitanBlumin/ClrHttpRequest)   
+- [clr_wmi_request](https://github.com/EitanBlumin/ClrWmiRequest)
