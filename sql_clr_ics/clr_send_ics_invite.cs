@@ -313,6 +313,7 @@ ORDER BY pa.sequence_number ASC";
             ics_contents_str.AppendLine(string.Format("STATUS:{0}", (method.Value == "CANCEL") ? "CANCELLED" : "CONFIRMED"));
             ics_contents_str.AppendLine("TRANSP:OPAQUE");
             ics_contents_str.AppendLine(string.Format("SEQUENCE:{0}", sequence.Value));
+            ics_contents_str.AppendLine(string.Format("X-MICROSOFT-CDO-APPT-SEQUENCE:{0}", sequence.Value));
 
             ics_contents_str.AppendLine(string.Format("DTSTART:{0:yyyyMMddTHHmmssZ}", start_time_utc.Value));
             ics_contents_str.AppendLine(string.Format("DTSTAMP:{0:yyyyMMddTHHmmssZ}", timestamp_utc.Value));
@@ -325,7 +326,8 @@ ORDER BY pa.sequence_number ASC";
                 ics_contents_str.AppendLine(string.Format("X-ALT-DESC;FMTTYPE={0}:{1}", body_format.Value == "HTML" ? "text/html" : "text/plain", body.Value));
 
             ics_contents_str.AppendLine(string.Format("SUMMARY:{0}", subject.Value));
-            ics_contents_str.AppendLine(string.Format("ORGANIZER:SENT-BY=\"mailto:{0}\";MAILTO:{0}", msg.From.Address));
+            ics_contents_str.AppendLine(string.Format("ORGANIZER:{0}", msg.From.Address));
+            //ics_contents_str.AppendLine(string.Format("ORGANIZER:SENT-BY=\"mailto:{0}\";MAILTO:{0}", msg.From.Address));
             ics_contents_str.AppendLine(string.Format("CLASS:{0}", sensitivity.Value.ToUpper()));
 
             switch (mailPriority)
@@ -345,29 +347,30 @@ ORDER BY pa.sequence_number ASC";
 
             string rsvp_string = (require_rsvp.Value ? "PARTSTAT=NEEDS-ACTION;RSVP=TRUE" : "PARTSTAT=ACCEPTED;RSVP=FALSE");
             bool organizer_in_recipients = false;
+            string lineSeparator = " "; // Environment.NewLine;
 
             foreach (MailAddress addr in msg.To)
             {
                 if (addr.Address == msg.From.Address) organizer_in_recipients = true;
-                ics_contents_str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{4}{2};CN=\"{0}\";{4}X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, recipients_role.Value.ToUpper(), Environment.NewLine));
+                ics_contents_str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{4}{2};CN=\"{0}\";{4}X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, recipients_role.Value.ToUpper(), lineSeparator));
             }
 
             foreach (MailAddress addr in msg.CC)
             {
                 if (addr.Address == msg.From.Address) organizer_in_recipients = true;
-                ics_contents_str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{4}{2};CN=\"{0}\";{4}X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, copy_recipients_role.Value.ToUpper(), Environment.NewLine));
+                ics_contents_str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{4}{2};CN=\"{0}\";{4}X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, copy_recipients_role.Value.ToUpper(), lineSeparator));
             }
 
             foreach (MailAddress addr in msg.Bcc)
             {
                 if (addr.Address == msg.From.Address) organizer_in_recipients = true;
-                ics_contents_str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{4}{2};CN=\"{0}\";{4}X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, blind_copy_recipients_role.Value.ToUpper(), Environment.NewLine));
+                ics_contents_str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE={3};{4}{2};CN=\"{0}\";{4}X-NUM-GUESTS=0:mailto:{1}", addr.DisplayName, addr.Address, rsvp_string, blind_copy_recipients_role.Value.ToUpper(), lineSeparator));
             }
 
             if (!organizer_in_recipients)
             {
                 msg.Bcc.Add(msg.From);
-                ics_contents_str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=NON-PARTICIPANT;{2}PARTSTAT=ACCEPTED;RSVP=FALSE;CN=\"{0}\";{2}X-NUM-GUESTS=0:mailto:{1}", msg.From.DisplayName, msg.From.Address, Environment.NewLine));
+                ics_contents_str.AppendLine(string.Format("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=NON-PARTICIPANT;{2}PARTSTAT=ACCEPTED;RSVP=FALSE;CN=\"{0}\";{2}X-NUM-GUESTS=0:mailto:{1}", msg.From.DisplayName, msg.From.Address, lineSeparator));
             }
 
             if (use_reminder && method.Value != "CANCEL")
@@ -375,7 +378,7 @@ ORDER BY pa.sequence_number ASC";
                 ics_contents_str.AppendLine("BEGIN:VALARM");
                 ics_contents_str.AppendLine(string.Format("TRIGGER:-PT{0}M", reminder_minutes.Value));
                 ics_contents_str.AppendLine("ACTION:DISPLAY");
-                ics_contents_str.AppendLine("DESCRIPTION:Reminder");
+                ics_contents_str.AppendLine("DESCRIPTION:REMINDER");
                 ics_contents_str.AppendLine("END:VALARM");
             }
 
@@ -398,6 +401,7 @@ ORDER BY pa.sequence_number ASC";
             smtpclient.UseDefaultCredentials = use_default_credentials.Value;
             smtpclient.EnableSsl = enable_ssl.Value;
             smtpclient.Credentials = credentials;
+            smtpclient.DeliveryMethod = SmtpDeliveryMethod.Network;
             System.Net.Mime.ContentType calendar_contype = new System.Net.Mime.ContentType("text/calendar;charset=UTF-8");
             calendar_contype.Parameters.Add("method", "REQUEST");
             calendar_contype.Parameters.Add("name", "Meeting.ics");
