@@ -57,10 +57,16 @@ public partial class StoredProcedures
 
         #region get missing info from sysmail profile
 
+        string currentPhase = "";
+        try
+        {
         if (from_address.IsNull || (username.IsNull && use_default_credentials.IsNull) || !profile_name.IsNull)
         {
+            currentPhase = "Creating SqlConnection";
             SqlConnection con = new SqlConnection("context connection=true"); // using existing CLR context connection
+            currentPhase = "Creating SqlCommand";
             SqlCommand cmd = con.CreateCommand();
+            currentPhase = "Opening SqlConnection";
             con.Open();
 
             if (profile_name.IsNull)
@@ -71,6 +77,7 @@ INNER JOIN [msdb].[dbo].[sysmail_profile] AS p
 ON pp.profile_id = p.profile_id
 WHERE pp.is_default = 1";
 
+                currentPhase = "Getting default DBMail profile";
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     if (!rdr.HasRows)
@@ -102,6 +109,7 @@ ORDER BY pa.sequence_number ASC";
             cmd.Parameters.AddWithValue("@Seq", 1);
             cmd.Parameters.AddWithValue("@Profile", profile_name.Value);
 
+            currentPhase = string.Format("Getting profile settings ({0})", profile_name.Value);
             using (SqlDataReader rdr = cmd.ExecuteReader())
             {
                 if (!rdr.HasRows)
@@ -112,6 +120,7 @@ ORDER BY pa.sequence_number ASC";
                 }
                 else
                 {
+                    rdr.Read();
                     if (from_address.IsNull) from_address = rdr.GetSqlString(0);
                     if (reply_to.IsNull) reply_to = rdr.GetSqlString(1);
                     if (smtp_servername.IsNull) smtp_servername = rdr.GetSqlString(2);
@@ -123,6 +132,12 @@ ORDER BY pa.sequence_number ASC";
                 rdr.Close();
             }
             con.Close();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(string.Format("Error while {0}: {1}", currentPhase, ex.Message), ex);
         }
 
         #endregion get missing info from sysmail profile
@@ -232,7 +247,7 @@ ORDER BY pa.sequence_number ASC";
                 }
                 catch (Exception e)
                 {
-                    throw new Exception(string.Format("Unable to attach '{0}': {1}", att_path, e.Message));
+                    throw new Exception(string.Format("Unable to attach '{0}': {1}", att_path, e.Message), e);
                 }
             }
         }
@@ -243,7 +258,7 @@ ORDER BY pa.sequence_number ASC";
         }
         catch (Exception e)
         {
-            throw new Exception("@from_address is invalid: " + e.Message);
+            throw new Exception("@from_address is invalid: " + e.Message, e);
         }
 
         try
@@ -252,7 +267,7 @@ ORDER BY pa.sequence_number ASC";
         }
         catch (Exception e)
         {
-            throw new Exception("@reply_to is invalid: " + e.Message);
+            throw new Exception("@reply_to is invalid: " + e.Message, e);
         }
 
         try
@@ -261,7 +276,7 @@ ORDER BY pa.sequence_number ASC";
         }
         catch (Exception e)
         {
-            throw new Exception("@recipients is invalid: " + e.Message);
+            throw new Exception("@recipients is invalid: " + e.Message, e);
         }
 
         try
@@ -270,7 +285,7 @@ ORDER BY pa.sequence_number ASC";
         }
         catch (Exception e)
         {
-            throw new Exception("@copy_recipients is invalid: " + e.Message);
+            throw new Exception("@copy_recipients is invalid: " + e.Message, e);
         }
 
         try
@@ -279,7 +294,7 @@ ORDER BY pa.sequence_number ASC";
         }
         catch (Exception e)
         {
-            throw new Exception("@blind_copy_recipients is invalid: " + e.Message);
+            throw new Exception("@blind_copy_recipients is invalid: " + e.Message, e);
         }
 
         #endregion initialize MailMessage and recipients
@@ -296,6 +311,7 @@ ORDER BY pa.sequence_number ASC";
 
             ics_contents_str.AppendLine("BEGIN:VEVENT");
             ics_contents_str.AppendLine(string.Format("STATUS:{0}", (method.Value == "CANCEL") ? "CANCELLED" : "CONFIRMED"));
+            ics_contents_str.AppendLine("TRANSP:OPAQUE");
             ics_contents_str.AppendLine(string.Format("SEQUENCE:{0}", sequence.Value));
 
             ics_contents_str.AppendLine(string.Format("DTSTART:{0:yyyyMMddTHHmmssZ}", start_time_utc.Value));
@@ -304,7 +320,10 @@ ORDER BY pa.sequence_number ASC";
             if (!location.IsNull) ics_contents_str.AppendLine("LOCATION: " + location.Value);
             ics_contents_str.AppendLine(string.Format("UID:{0}", event_identifier.Value));
             ics_contents_str.AppendLine(string.Format("DESCRIPTION:{0}", body.Value));
-            ics_contents_str.AppendLine(string.Format("X-ALT-DESC;FMTTYPE={0}:{1}", body_format.Value == "HTML" ? "text/html" : "text/plain", body.Value));
+
+            if (method.Value != "CANCEL")
+                ics_contents_str.AppendLine(string.Format("X-ALT-DESC;FMTTYPE={0}:{1}", body_format.Value == "HTML" ? "text/html" : "text/plain", body.Value));
+
             ics_contents_str.AppendLine(string.Format("SUMMARY:{0}", subject.Value));
             ics_contents_str.AppendLine(string.Format("ORGANIZER:SENT-BY=\"mailto:{0}\";MAILTO:{0}", msg.From.Address));
             ics_contents_str.AppendLine(string.Format("CLASS:{0}", sensitivity.Value.ToUpper()));
@@ -379,21 +398,22 @@ ORDER BY pa.sequence_number ASC";
             smtpclient.UseDefaultCredentials = use_default_credentials.Value;
             smtpclient.EnableSsl = enable_ssl.Value;
             smtpclient.Credentials = credentials;
-            System.Net.Mime.ContentType contype = new System.Net.Mime.ContentType("text/calendar");
-            contype.Parameters.Add("method", "REQUEST");
-            contype.Parameters.Add("name", "Meeting.ics");
+            System.Net.Mime.ContentType calendar_contype = new System.Net.Mime.ContentType("text/calendar;charset=UTF-8");
+            calendar_contype.Parameters.Add("method", "REQUEST");
+            calendar_contype.Parameters.Add("name", "Meeting.ics");
 
-            AlternateView avBody = AlternateView.CreateAlternateViewFromString(body.Value, new System.Net.Mime.ContentType(body_format.Value == "HTML" ? "text/html" : "text/plain"));
+            AlternateView avBody = AlternateView.CreateAlternateViewFromString(body.Value, new System.Net.Mime.ContentType(body_format.Value == "HTML" ? "text/html;charset=UTF-8" : "text/plain"));
             msg.AlternateViews.Add(avBody);
 
-            AlternateView avCal = AlternateView.CreateAlternateViewFromString(ics_contents.Value, contype);
+            AlternateView avCal = AlternateView.CreateAlternateViewFromString(ics_contents.Value, calendar_contype);
+            //avCal.TransferEncoding = System.Net.Mime.TransferEncoding.Base64;
             msg.AlternateViews.Add(avCal);
 
             msg.Headers.Add("Content-class", "urn:content-classes:calendarmessage");
         }
         catch (Exception e)
         {
-            throw new Exception("SMTP Client Configuration Error: " + e.Message);
+            throw new Exception("SMTP Client Configuration Error: " + e.Message, e);
         }
 
         #endregion initialize and configure SmtpClient
@@ -402,13 +422,17 @@ ORDER BY pa.sequence_number ASC";
 
         try
         {
+            //if (!suppress_info_messages)
+            //    SqlContext.Pipe.Send(string.Format("Sending message to: {0}{1}{2}", msg.To.ToString(), Environment.NewLine, msg.Body));
+
             smtpclient.Send(msg);
+
             if (!suppress_info_messages)
                 SqlContext.Pipe.Send(string.Format("Mail Sent. Event Identifier: {0}", event_identifier.Value));
         }
         catch (Exception e)
         {
-            throw new Exception("Error sending mail: " + e.Message);
+            throw new Exception("Error sending mail: " + e.Message, e);
         }
 
         #endregion send mail
