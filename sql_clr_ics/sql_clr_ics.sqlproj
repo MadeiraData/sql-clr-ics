@@ -97,7 +97,7 @@
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="PathToSignedDLL">
-      <DefaultValue>C:\ClrIcsTest\sql_clr_ics.dll</DefaultValue>
+      <DefaultValue>C:\SqlClrIcs\sql_clr_ics.dll</DefaultValue>
       <Value>$(SqlCmdVar__1)</Value>
     </SqlCmdVariable>
   </ItemGroup>
