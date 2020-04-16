@@ -27,7 +27,7 @@ The CLR assembly in this project can only be deployed to a database with the **t
 ## Installation
 
 If you have SSDT, you can open the SQL server project and publish it to your database of choice.
-Alternatively, you can use [this simple installation script](https://raw.githubusercontent.com/EitanBlumin/sql-clr-ics/v2.0/sql_clr_ics/sql_clr_ics_install.sql) that sets everything up for you in your database of choice.
+Alternatively, you can use [this simple installation script](https://raw.githubusercontent.com/EitanBlumin/sql-clr-ics/master/sql_clr_ics/sql_clr_ics_install.sql) that sets everything up for you in your database of choice.
 
 ## Syntax
 
