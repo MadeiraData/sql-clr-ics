@@ -22,7 +22,7 @@ In this page:
 
 ## Prerequisites
 
-The CLR assembly in this project can only be deployed to a database with the **trustworthy** setting on, due to the assembly requiring the **UNSAFE permission set**.
+The CLR assembly in this project can only be deployed to a SQL Server with CLR enabled, and support for **UNSAFE** permission set.
 
 ## Installation
 
