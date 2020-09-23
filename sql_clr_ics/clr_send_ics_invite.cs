@@ -193,7 +193,7 @@ ORDER BY pa.sequence_number ASC";
 
             #region validations
 
-            currentPhase = "Parameter validations";
+            currentPhase = "Validating parameters";
 
             StringBuilder sb_Errors = new StringBuilder();
 
@@ -205,10 +205,10 @@ ORDER BY pa.sequence_number ASC";
                )
                 sb_Errors.AppendLine("Missing recipients: Please specify either @recipients, @copy_recipients or @blind_copy_recipients");
 
-            if (body_format.Value != "HTML" && body_format.Value != "TEXT") sb_Errors.AppendLine(string.Format("@body_format {0} is invalid. Valid values: TEXT, HTML", body_format.Value));
-            if (!TryParseEnum(typeof(iCalMethods), method.Value)) sb_Errors.AppendLine(string.Format("@method {0} is invalid. Valid values: {1}", method.Value, Enum.GetNames(typeof(iCalMethods)).ToString().ToUpper()));
-            if (!TryParseEnum(typeof(iCalClass), sensitivity.Value)) sb_Errors.AppendLine(string.Format("sensitivity {0} is invalid. Valid values: {1}", sensitivity.Value, Enum.GetNames(typeof(iCalClass)).ToString().ToUpper()));
-            if (!TryParseEnum(typeof(iCalClass), importance.Value, out mailPriority)) sb_Errors.AppendLine(string.Format("@importance {0} is invalid. Valid values: {1}", importance.Value, Enum.GetNames(typeof(MailPriority)).ToString().ToUpper()));
+            if (body_format.Value != "HTML" && body_format.Value != "TEXT") sb_Errors.AppendLine(string.Format("@body_format {0} is invalid. Valid values: TEXT | HTML", body_format.Value));
+            if (!TryParseEnum(typeof(iCalMethods), method.Value.ToUpper())) sb_Errors.AppendLine(string.Format("@method {0} is invalid. Valid values: {1}", method.Value, String.Join(" | ", Enum.GetNames(typeof(iCalMethods)))));
+            if (!TryParseEnum(typeof(iCalClass), sensitivity.Value.ToUpper())) sb_Errors.AppendLine(string.Format("sensitivity {0} is invalid. Valid values: {1}", sensitivity.Value, String.Join(" | ", Enum.GetNames(typeof(iCalClass)))));
+            if (!TryParseEnum(typeof(MailPriority), importance.Value, out mailPriority)) sb_Errors.AppendLine(string.Format("@importance {0} is invalid. Valid values: {1}", importance.Value, String.Join(" | ", Enum.GetNames(typeof(MailPriority)))));
 
             bool recipient_role_found = false;
             bool copy_recipient_role_found = false;
@@ -481,7 +481,7 @@ ORDER BY pa.sequence_number ASC";
         try
         {
             returnObject = (TEnum)Enum.Parse(type, value);
-            return (returnObject != null);
+            return (returnObject == null) ? false : true;
         }
         catch
         {
