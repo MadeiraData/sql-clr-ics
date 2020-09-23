@@ -30,7 +30,7 @@
     <Trustworthy>False</Trustworthy>
     <GenerateCreateScript>True</GenerateCreateScript>
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>sql_clr_ics_pkey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>sql_clr_ics_key.snk</AssemblyOriginatorKeyFile>
     <TargetFrameworkProfile />
     <GenerateSqlClrSymbols>True</GenerateSqlClrSymbols>
     <GenerateSqlClrDdl>True</GenerateSqlClrDdl>
@@ -86,6 +86,7 @@
     <None Include="sql_clr_ics_pkey.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="sql_clr_ics_key.snk" />
   </ItemGroup>
   <ItemGroup>
     <None Include="sql_clr_ics_install.sql">
