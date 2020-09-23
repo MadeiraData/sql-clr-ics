@@ -1,5 +1,7 @@
 # sp_send_calendar_event
 
+![](https://dev.azure.com/madeiradata/sql-clr-ics/_apis/build/status/sql-clr-ics-CI)
+
 Send Calendar Event / Appointment Invitations (iCal formatted file) from within SQL Server using a CLR stored procedure.
 
 In this page:
