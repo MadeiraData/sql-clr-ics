@@ -193,7 +193,7 @@ ORDER BY pa.sequence_number ASC";
 
             #region validations
 
-            currentPhase = "Parameter validations";
+            currentPhase = "Validating parameters";
 
             StringBuilder sb_Errors = new StringBuilder();
 
@@ -205,10 +205,10 @@ ORDER BY pa.sequence_number ASC";
                )
                 sb_Errors.AppendLine("Missing recipients: Please specify either @recipients, @copy_recipients or @blind_copy_recipients");
 
-            if (body_format.Value != "HTML" && body_format.Value != "TEXT") sb_Errors.AppendLine(string.Format("@body_format {0} is invalid. Valid values: TEXT, HTML", body_format.Value));
-            if (!Enum.TryParse(method.Value, true, out iCalMethods method_enumvalue)) sb_Errors.AppendLine(string.Format("@method {0} is invalid. Valid values: {1}", method.Value, Enum.GetNames(typeof(iCalMethods)).ToString().ToUpper()));
-            if (!Enum.TryParse(sensitivity.Value, true, out iCalClass sensitivity_enumvalue)) sb_Errors.AppendLine(string.Format("sensitivity {0} is invalid. Valid values: {1}", sensitivity.Value, Enum.GetNames(typeof(iCalClass)).ToString().ToUpper()));
-            if (!Enum.TryParse(importance.Value, true, out mailPriority)) sb_Errors.AppendLine(string.Format("@importance {0} is invalid. Valid values: {1}", importance.Value, Enum.GetNames(typeof(MailPriority)).ToString().ToUpper()));
+            if (body_format.Value != "HTML" && body_format.Value != "TEXT") sb_Errors.AppendLine(string.Format("@body_format {0} is invalid. Valid values: TEXT | HTML", body_format.Value));
+            if (!TryParseEnum(typeof(iCalMethods), method.Value.ToUpper())) sb_Errors.AppendLine(string.Format("@method {0} is invalid. Valid values: {1}", method.Value, String.Join(" | ", Enum.GetNames(typeof(iCalMethods)))));
+            if (!TryParseEnum(typeof(iCalClass), sensitivity.Value.ToUpper())) sb_Errors.AppendLine(string.Format("sensitivity {0} is invalid. Valid values: {1}", sensitivity.Value, String.Join(" | ", Enum.GetNames(typeof(iCalClass)))));
+            if (!TryParseEnum(typeof(MailPriority), importance.Value, out mailPriority)) sb_Errors.AppendLine(string.Format("@importance {0} is invalid. Valid values: {1}", importance.Value, String.Join(" | ", Enum.GetNames(typeof(MailPriority)))));
 
             bool recipient_role_found = false;
             bool copy_recipient_role_found = false;
@@ -276,7 +276,7 @@ ORDER BY pa.sequence_number ASC";
 
             try
             {
-                if (!reply_to.IsNull && !string.IsNullOrEmpty(reply_to.Value)) msg.ReplyToList.Add(reply_to.Value.Replace(';', ','));
+                if (!reply_to.IsNull && !string.IsNullOrEmpty(reply_to.Value)) msg.ReplyTo = new MailAddress(reply_to.Value);
             }
             catch (Exception e)
             {
@@ -466,6 +466,40 @@ ORDER BY pa.sequence_number ASC";
 
             throw new Exception(sb.ToString(), innerEx);
         }
+    }
+
+    /// <summary>
+    /// This is a .NET 3.5 compatible replacement for Enum.TryParse functionality.
+    /// Check whether a given enum value is valid, and return an output object.
+    /// </summary>
+    /// <param name="type">typeof(enumClassName)</param>
+    /// <param name="value">String value to check</param>
+    /// <param name="returnObject">If enum is valid, outputs a corresponding parsed object, otherwise outputs null</param>
+    /// <returns>true = valid, false = invalid</returns>
+    private static bool TryParseEnum<TEnum>(Type type, string value, out TEnum returnObject)
+    {
+        try
+        {
+            returnObject = (TEnum)Enum.Parse(type, value);
+            return (returnObject == null) ? false : true;
+        }
+        catch
+        {
+            returnObject = default(TEnum);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// This is a .NET 3.5 compatible replacement for Enum.TryParse functionality.
+    /// Check whether a given enum value is valid.
+    /// </summary>
+    /// <param name="type">typeof(enumClassName)</param>
+    /// <param name="value">String value to check</param>
+    /// <returns>true = valid, false = invalid</returns>
+    private static bool TryParseEnum(Type type, string value)
+    {
+        return (TryParseEnum(type, value, out object enumcheck));
     }
 
     private static void Smtpclient_SendCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
