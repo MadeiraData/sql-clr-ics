@@ -44,7 +44,7 @@ exec sp_send_calendar_event
 	[ , [ @subject = ] 'subject' ]
 	[ , [ @body = ] 'body' ]
 	[ , [ @body_format = ] 'TEXT | HTML' ]
-	[ , [ @importance = ] 'LOW | NORMAL | HIGH' ]
+	[ , [ @importance = ] 'Low | Normal | High' ]
 	[ , [ @sensitivity = ] 'PUBLIC | PRIVATE | CONFIDENTIAL' ]
 	[ , [ @file_attachments = ] 'file_attachments [ ; ...n ]' ]
 	[ , [ @location = ] 'location' ]
