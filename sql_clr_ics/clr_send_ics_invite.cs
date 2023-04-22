@@ -5,7 +5,6 @@ using System.Net.Mail;
 using System.Data.SqlTypes;
 using System.Data.SqlClient;
 using Microsoft.SqlServer.Server;
-using System.Runtime.InteropServices;
 
 public partial class StoredProcedures
 {
@@ -94,7 +93,7 @@ WHERE pp.is_default = 1";
 
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
-                        if (!rdr.HasRows)
+                        if (!rdr.HasRows || rdr.IsDBNull(0))
                         {
                             rdr.Close();
                             con.Close();
@@ -136,13 +135,13 @@ ORDER BY pa.sequence_number ASC";
                     else
                     {
                         rdr.Read();
-                        if (from_address.IsNull) from_address = rdr.GetSqlString(0);
-                        if (reply_to.IsNull) reply_to = rdr.GetSqlString(1);
-                        if (smtp_servername.IsNull) smtp_servername = rdr.GetSqlString(2);
-                        if (port.IsNull) port = rdr.GetSqlInt32(3);
-                        if (enable_ssl.IsNull) enable_ssl = rdr.GetSqlBoolean(4);
-                        if (use_default_credentials.IsNull) use_default_credentials = rdr.GetSqlBoolean(5).Value;
-                        if (username.IsNull && !use_default_credentials.Value) username = rdr.GetSqlString(6);
+                        if (from_address.IsNull && !rdr.IsDBNull(0)) from_address = rdr.GetSqlString(0);
+                        if (reply_to.IsNull && !rdr.IsDBNull(1)) reply_to = rdr.GetSqlString(1);
+                        if (smtp_servername.IsNull && !rdr.IsDBNull(2)) smtp_servername = rdr.GetSqlString(2);
+                        if (port.IsNull && !rdr.IsDBNull(3)) port = rdr.GetSqlInt32(3);
+                        if (enable_ssl.IsNull && !rdr.IsDBNull(4)) enable_ssl = rdr.GetSqlBoolean(4);
+                        if (use_default_credentials.IsNull && !rdr.IsDBNull(5)) use_default_credentials = rdr.GetSqlBoolean(5).Value;
+                        if (username.IsNull && !use_default_credentials.Value && !rdr.IsDBNull(6)) username = rdr.GetSqlString(6);
                     }
                     rdr.Close();
                 }
