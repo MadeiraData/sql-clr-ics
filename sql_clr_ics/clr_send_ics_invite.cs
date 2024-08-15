@@ -421,7 +421,7 @@ ORDER BY pa.sequence_number ASC";
             currentPhase = "Constructing mail contents";
             System.Net.Mime.ContentType calendar_contype = new System.Net.Mime.ContentType("text/calendar;charset=UTF-8");
             calendar_contype.Parameters.Add("method", "REQUEST");
-            calendar_contype.Parameters.Add("name", "Meeting.ics");
+            calendar_contype.Parameters.Add("name", "invite.ics");
 
             AlternateView avBody = AlternateView.CreateAlternateViewFromString(body.Value, new System.Net.Mime.ContentType(body_format.Value == "HTML" ? "text/html;charset=UTF-8" : "text/plain"));
             msg.AlternateViews.Add(avBody);
