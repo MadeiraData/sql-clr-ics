@@ -416,6 +416,7 @@ ORDER BY pa.sequence_number ASC";
             smtpclient.EnableSsl = enable_ssl.Value;
             smtpclient.Credentials = credentials;
             smtpclient.DeliveryMethod = SmtpDeliveryMethod.Network;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
             currentPhase = "Constructing mail contents";
             System.Net.Mime.ContentType calendar_contype = new System.Net.Mime.ContentType("text/calendar;charset=UTF-8");
