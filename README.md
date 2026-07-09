@@ -14,6 +14,7 @@ In this page:
 - [Result Sets](#result-sets)
 - [Remarks](#remarks)
 - [Examples](#examples)
+- [sp_send_graph_calendar_event (Microsoft 365 / Graph API)](#sp_send_graph_calendar_event-microsoft-365--graph-api)
 - [License and Copyright](#license-and-copyright)
 - [Acknowledgements](#acknowledgements)
 - [See Also](#see-also)
@@ -360,6 +361,199 @@ EXEC sp_send_calendar_event
 SELECT EventID = @EventID
 ```
  
+## sp_send_graph_calendar_event (Microsoft 365 / Graph API)
+
+`sp_send_calendar_event` builds an ICS (iCalendar) file and delivers it over SMTP. That works well with generic SMTP servers, but it doesn't integrate cleanly with **Microsoft 365** mailboxes — invitations arrive as attachments rather than as first-class Outlook/Teams meetings, and modern M365 tenants increasingly disable basic SMTP auth.
+
+**`sp_send_graph_calendar_event`** is the M365-native equivalent. Instead of constructing an ICS file, it creates, updates, or cancels a calendar event **directly in an organizer's mailbox via the [Microsoft Graph API](https://learn.microsoft.com/en-us/graph/api/resources/event)**. Microsoft Graph then dispatches the meeting invitations (and any cancellation notices) to the attendees on the organizer's behalf — exactly as if the organizer had created the meeting in Outlook. Optionally, it can also spin up a **Microsoft Teams** online meeting for the event.
+
+The CLR assembly has **no external dependencies** (no Microsoft.Graph SDK, no JSON library) — it uses raw `HttpWebRequest` calls and hand-built JSON — so deployment is just as simple as the SMTP-based procedure. It is installed by the same assembly and installation script.
+
+### Prerequisites
+
+To authenticate against Microsoft Graph you need an **Azure AD (Entra ID) app registration** using the OAuth2 **client-credentials (app-only)** flow:
+
+1. Register an application in **Entra ID → App registrations**.
+2. Add the **application** (not delegated) Microsoft Graph permission **`Calendars.ReadWrite`**, then click **Grant admin consent**.
+3. Create a **client secret** under **Certificates & secrets**.
+4. Note your **Directory (tenant) ID**, **Application (client) ID**, and the **client secret value**.
+
+Because the app has application-level access to all mailboxes in the tenant, you should scope it to specific mailboxes with an [Application Access Policy](https://learn.microsoft.com/en-us/graph/auth-limit-mailbox-access) in Exchange Online.
+
+Alternatively, if you already obtain bearer tokens through an external broker, you can bypass the client-credentials flow entirely by passing a pre-acquired token to `@access_token`.
+
+### Syntax
+
+```
+exec sp_send_graph_calendar_event
+	[   [ @tenant_id = ] 'tenant_id' ]
+	[ , [ @client_id = ] 'client_id' ]
+	[ , [ @client_secret = ] 'client_secret' ]
+	[ , [ @access_token = ] 'access_token' ]
+	[ , [ @authority_url = ] 'authority_url' ]
+	[ , [ @graph_url = ] 'graph_url' ]
+	[ , [ @organizer = ] 'organizer' ]
+	[ , [ @recipients = ] 'recipients [ ; ...n ]' ]
+	[ , [ @optional_recipients = ] 'optional_recipients [ ; ...n ]' ]
+	[ , [ @resource_recipients = ] 'resource_recipients [ ; ...n ]' ]
+	[ , [ @subject = ] 'subject' ]
+	[ , [ @body = ] 'body' ]
+	[ , [ @body_format = ] 'TEXT | HTML' ]
+	[ , [ @importance = ] 'Low | Normal | High' ]
+	[ , [ @sensitivity = ] 'Public | Private | Confidential | Personal' ]
+	[ , [ @location = ] 'location' ]
+	[ , [ @start_time_utc = ] 'start_time_utc' ]
+	[ , [ @end_time_utc = ] 'end_time_utc' ]
+	[ , [ @method = ] 'REQUEST | UPDATE | CANCEL' ]
+	[ , [ @use_reminder = ] 1 | 0 ]
+	[ , [ @reminder_minutes = ] reminder_minutes ]
+	[ , [ @require_rsvp = ] 1 | 0 ]
+	[ , [ @create_teams_meeting = ] 1 | 0 ]
+	[ , [ @all_day_event = ] 1 | 0 ]
+	[ , [ @cancellation_comment = ] 'cancellation_comment' ]
+	[ , [ @suppress_info_messages = ] 1 | 0 ]
+	[ , [ @event_identifier = ] 'event_identifier' [ OUTPUT ] ]
+	[ , [ @response_content = ] 'response_content' [ OUTPUT ] ]
+```
+
+### Arguments
+
+`[ @tenant_id = ] 'tenant_id'`, `[ @client_id = ] 'client_id'`, `[ @client_secret = ] 'client_secret'`
+
+ The Entra ID **Directory (tenant) ID**, **Application (client) ID**, and **client secret** of the app registration used for the client-credentials flow. All three are required *unless* `@access_token` is supplied.
+
+`[ @access_token = ] 'access_token'`
+
+ An optional pre-acquired Graph bearer token (of type **nvarchar(max)**). When specified, the client-credentials parameters (`@tenant_id`, `@client_id`, `@client_secret`) are ignored and no token is requested from Azure AD.
+
+`[ @authority_url = ] 'authority_url'`
+
+ The OAuth2 authority base URL. Defaults to `https://login.microsoftonline.com`. Override for sovereign/national clouds (e.g. `https://login.microsoftonline.us`).
+
+`[ @graph_url = ] 'graph_url'`
+
+ The Microsoft Graph base URL. Defaults to `https://graph.microsoft.com`. Override for sovereign/national clouds (e.g. `https://graph.microsoft.us`).
+
+`[ @organizer = ] 'organizer'`
+
+ **Required.** The mailbox (user id or UPN, e.g. `meetings@contoso.com`) under which the event is created. This becomes the meeting **organizer**, and the app registration must have write access to this mailbox. Maps to the Graph `/users/{organizer}/events` path.
+
+`[ @recipients = ] 'recipients [ ; ...n ]'`, `[ @optional_recipients = ]`, `[ @resource_recipients = ]`
+
+ Semicolon- or comma-delimited lists of attendee e-mail addresses, mapped to Graph attendee types **required**, **optional**, and **resource** respectively. Each entry may be a bare address (`user@contoso.com`) or a display-name form (`"Jane Doe" <jane@contoso.com>`). At least one attendee is required when `@method` is `REQUEST`.
+
+`[ @subject = ] 'subject'`, `[ @body = ] 'body'`, `[ @body_format = ] 'TEXT | HTML'`, `[ @location = ] 'location'`
+
+ The event subject, body content and format (`TEXT`→`Text`, `HTML`→`HTML`), and location display name.
+
+`[ @importance = ] 'Low | Normal | High'`
+
+ Maps to the Graph event `importance` property (`low` / `normal` / `high`). Defaults to Normal.
+
+`[ @sensitivity = ] 'Public | Private | Confidential | Personal'`
+
+ Maps to the Graph event `sensitivity` property. `Public`→`normal`, `Private`→`private`, `Confidential`→`confidential`, `Personal`→`personal`. Defaults to Public.
+
+`[ @start_time_utc = ] 'start_time_utc'`, `[ @end_time_utc = ] 'end_time_utc'`
+
+ Event start/end times, interpreted as **UTC** and sent to Graph with `"timeZone":"UTC"`. If not specified, start defaults to now + 5 hours and end defaults to start + 1 hour.
+
+`[ @method = ] 'REQUEST | UPDATE | CANCEL'`
+
+ The operation to perform. Defaults to `REQUEST`.
+
+- `REQUEST` — create a new event (`POST /events`). Graph sends the invitations. The new Graph event id is returned in `@event_identifier`.
+- `UPDATE` — update an existing event (`PATCH /events/{id}`). Requires `@event_identifier`. Graph sends the updated invitation.
+- `CANCEL` — cancel an existing event (`POST /events/{id}/cancel`). Requires `@event_identifier`. Graph sends the cancellation to attendees.
+
+`[ @use_reminder = ] 1 | 0` and `[ @reminder_minutes = ] reminder_minutes`
+
+ Whether to enable a reminder (`isReminderOn`) and how many minutes before start it fires (`reminderMinutesBeforeStart`). Defaults to enabled, 15 minutes.
+
+`[ @require_rsvp = ] 1 | 0`
+
+ Maps to the Graph `responseRequested` property. Defaults to 1 (true).
+
+`[ @create_teams_meeting = ] 1 | 0`
+
+ When 1, sets `isOnlineMeeting`/`onlineMeetingProvider = teamsForBusiness` so a **Microsoft Teams** join link is created for the event. Defaults to 0.
+
+`[ @all_day_event = ] 1 | 0`
+
+ When 1, marks the event as an all-day event (`isAllDay`, with start/end snapped to date boundaries). Defaults to 0.
+
+`[ @cancellation_comment = ] 'cancellation_comment'`
+
+ An optional message included in the cancellation notice sent to attendees when `@method` is `CANCEL`.
+
+`[ @suppress_info_messages = ] 1 | 0`
+
+ Whether to suppress the success message. Defaults to 0.
+
+`[ @event_identifier = ] 'event_identifier' [ OUTPUT ]`
+
+ On `REQUEST`, returns the **Graph event id** of the newly created event (of type **nvarchar(max)** — Graph ids are long opaque strings). Store this value; it is **required as an input** for subsequent `UPDATE` and `CANCEL` calls.
+
+`[ @response_content = ] 'response_content' [ OUTPUT ]`
+
+ Returns the raw JSON response body from Graph (useful for retrieving additional properties such as the Teams `joinUrl`, or for troubleshooting).
+
+### Examples
+
+#### D. Create an M365 meeting with a Teams link
+
+```sql
+DECLARE @EventID nvarchar(max), @Response nvarchar(max)
+
+EXEC sp_send_graph_calendar_event
+        @tenant_id     = N'00000000-0000-0000-0000-000000000000',
+        @client_id     = N'11111111-1111-1111-1111-111111111111',
+        @client_secret = N'your-client-secret-value',
+        @organizer     = N'meetings@contoso.com',
+        @recipients    = N'alice@contoso.com; "Bob Smith" <bob@contoso.com>',
+        @optional_recipients = N'carol@contoso.com',
+        @subject       = N'Quarterly DB Review',
+        @body          = N'<h1>Agenda</h1><p>Index maintenance & capacity planning.</p>',
+        @body_format   = N'HTML',
+        @location      = N'Conference Room A',
+        @start_time_utc = '2026-07-15 14:00',
+        @end_time_utc   = '2026-07-15 15:00',
+        @create_teams_meeting = 1,
+        @require_rsvp   = 1,
+        @event_identifier = @EventID OUTPUT,
+        @response_content = @Response OUTPUT
+
+SELECT EventID = @EventID
+```
+
+#### E. Update the previously created meeting
+
+```sql
+EXEC sp_send_graph_calendar_event
+        @tenant_id     = N'00000000-0000-0000-0000-000000000000',
+        @client_id     = N'11111111-1111-1111-1111-111111111111',
+        @client_secret = N'your-client-secret-value',
+        @organizer     = N'meetings@contoso.com',
+        @subject       = N'Quarterly DB Review (rescheduled)',
+        @start_time_utc = '2026-07-16 14:00',
+        @end_time_utc   = '2026-07-16 15:00',
+        @method        = N'UPDATE',
+        @event_identifier = @EventID   -- Graph event id from the REQUEST call
+```
+
+#### F. Cancel the meeting
+
+```sql
+EXEC sp_send_graph_calendar_event
+        @tenant_id     = N'00000000-0000-0000-0000-000000000000',
+        @client_id     = N'11111111-1111-1111-1111-111111111111',
+        @client_secret = N'your-client-secret-value',
+        @organizer     = N'meetings@contoso.com',
+        @method        = N'CANCEL',
+        @cancellation_comment = N'Postponed to next quarter.',
+        @event_identifier = @EventID   -- Graph event id from the REQUEST call
+```
+
 ## License and copyright
 
 This project is copyrighted by Eitan Blumin, and licensed under the MIT license agreement.

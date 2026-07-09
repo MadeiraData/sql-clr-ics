@@ -14,7 +14,7 @@ CREATE PROCEDURE [dbo].[sp_send_calendar_event]
 	@blind_copy_recipients [nvarchar](max) = NULL,
 	@from_address [nvarchar](max) = NULL,
 	@reply_to [nvarchar](max) = NULL,
-	@subject [nvarchar](255) = N'SQL Server Meeting',
+	@subject [nvarchar](255) = NULL,
 	@body [nvarchar](max) = NULL,
 	@body_format [nvarchar](20) = N'TEXT',
 	@importance [nvarchar](6) = N'Normal',

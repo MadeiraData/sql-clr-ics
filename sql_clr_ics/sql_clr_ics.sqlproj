@@ -77,6 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="clr_send_ics_invite.cs" />
+    <Compile Include="clr_send_graph_event.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -95,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <Build Include="sp_send_calendar_event.sql" />
+    <Build Include="sp_send_graph_calendar_event.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="PathToSignedDLL">
